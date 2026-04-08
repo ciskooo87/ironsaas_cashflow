@@ -1,7 +1,8 @@
 from pathlib import Path
 from uuid import uuid4
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy import select
+from datetime import date
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.db import get_db
@@ -192,8 +193,45 @@ def cancel_launch(launch_id: int, db: Session = Depends(get_db), _: User = Depen
 
 
 @router.get('/companies/{company_id}/launches', response_model=list[LaunchOut])
-def list_launches(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id)).all())
+def list_launches(
+    company_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+    status: str | None = Query(None),
+    type: str | None = Query(None),
+    account_id: int | None = Query(None),
+    category_id: int | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    q: str | None = Query(None),
+    order: str = Query('date_desc'),
+):
+    stmt = select(Launch).where(Launch.company_id == company_id)
+    if status:
+        stmt = stmt.where(Launch.status == status)
+    if type:
+        stmt = stmt.where(Launch.type == type)
+    if account_id:
+        stmt = stmt.where(Launch.account_id == account_id)
+    if category_id:
+        stmt = stmt.where(Launch.category_id == category_id)
+    if date_from:
+        stmt = stmt.where(Launch.launch_date >= date_from)
+    if date_to:
+        stmt = stmt.where(Launch.launch_date <= date_to)
+    if q:
+        stmt = stmt.where(Launch.description.ilike(f'%{q}%'))
+
+    if order == 'date_asc':
+        stmt = stmt.order_by(Launch.launch_date.asc(), Launch.id.asc())
+    elif order == 'amount_desc':
+        stmt = stmt.order_by(desc(Launch.amount), desc(Launch.launch_date))
+    elif order == 'amount_asc':
+        stmt = stmt.order_by(Launch.amount.asc(), desc(Launch.launch_date))
+    else:
+        stmt = stmt.order_by(desc(Launch.launch_date), desc(Launch.id))
+
+    launches = list(db.scalars(stmt).all())
     return [serialize_launch(db, row) for row in launches]
 
 

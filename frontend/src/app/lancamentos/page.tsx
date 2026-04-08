@@ -14,7 +14,26 @@ export default function LancamentosPage() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<any | null>(null);
-  const [status, setStatus] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [filters, setFilters] = useState({
+    status: '',
+    type: '',
+    account_id: '',
+    category_id: '',
+    date_from: '',
+    date_to: '',
+    q: '',
+    order: 'date_desc',
+  });
+
+  function buildLaunchesPath() {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, String(value));
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return `/companies/${companyId}/launches${suffix}`;
+  }
 
   function loadAll() {
     if (!companyId) {
@@ -26,7 +45,7 @@ export default function LancamentosPage() {
     }
     setLoading(true);
     Promise.all([
-      apiGet(`/companies/${companyId}/launches`).catch(() => []),
+      apiGet(buildLaunchesPath()).catch(() => []),
       apiGet(`/companies/${companyId}/accounts`).catch(() => []),
       apiGet(`/companies/${companyId}/categories`).catch(() => []),
     ]).then(([launchesData, accountsData, categoriesData]) => {
@@ -39,12 +58,17 @@ export default function LancamentosPage() {
 
   useEffect(() => {
     loadAll();
-  }, [companyId]);
+  }, [companyId, filters]);
 
   const availableCategories = useMemo(() => {
     if (!form) return categories;
     return categories.filter((category: any) => category.direction === 'ambos' || category.direction === form.type);
   }, [categories, form]);
+
+  const totals = useMemo(() => ({
+    entries: launches.filter((launch: any) => launch.type === 'entrada' && launch.status !== 'cancelado').reduce((acc: number, launch: any) => acc + Number(launch.amount), 0),
+    exits: launches.filter((launch: any) => launch.type === 'saida' && launch.status !== 'cancelado').reduce((acc: number, launch: any) => acc + Number(launch.amount), 0),
+  }), [launches]);
 
   function startEdit(launch: any) {
     setEditingId(launch.id);
@@ -61,7 +85,7 @@ export default function LancamentosPage() {
       attachment_url: launch.attachment_url || '',
       status: launch.status || 'confirmado',
     });
-    setStatus('');
+    setStatusMessage('');
   }
 
   async function saveEdit() {
@@ -82,10 +106,10 @@ export default function LancamentosPage() {
       });
       setEditingId(null);
       setForm(null);
-      setStatus('Lançamento atualizado com sucesso.');
+      setStatusMessage('Lançamento atualizado com sucesso.');
       loadAll();
     } catch {
-      setStatus('Falha ao atualizar lançamento.');
+      setStatusMessage('Falha ao atualizar lançamento.');
     }
   }
 
@@ -96,20 +120,62 @@ export default function LancamentosPage() {
         setEditingId(null);
         setForm(null);
       }
-      setStatus('Lançamento baixado/cancelado com sucesso.');
+      setStatusMessage('Lançamento baixado/cancelado com sucesso.');
       loadAll();
     } catch {
-      setStatus('Falha ao baixar lançamento.');
+      setStatusMessage('Falha ao baixar lançamento.');
     }
   }
 
   return (
     <AppShell
       title="Lançamentos"
-      subtitle="Fluxo operacional de entradas e saídas com edição, baixa lógica, classificação e anexos."
+      subtitle="Fluxo operacional de entradas e saídas com filtros, ordenação, edição, baixa lógica, classificação e anexos."
       actions={<Link href="/lancamentos/novo" style={{ background: '#0f172a', color: '#fff', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Novo lançamento</Link>}
     >
-      {status ? <div style={{ marginBottom: 16, background: '#fff', border: '1px solid #d0d5dd', borderRadius: 14, padding: 16, color: '#475467' }}>{status}</div> : null}
+      {statusMessage ? <div style={{ marginBottom: 16, background: '#fff', border: '1px solid #d0d5dd', borderRadius: 14, padding: 16, color: '#475467' }}>{statusMessage}</div> : null}
+
+      <div style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20, display: 'grid', gap: 14 }}>
+          <div style={{ fontWeight: 700 }}>Filtros e ordenação</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
+            <input value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} placeholder="Buscar descrição" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
+            <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+              <option value="">Todos os status</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+            <select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+              <option value="">Todos os tipos</option>
+              <option value="entrada">Entrada</option>
+              <option value="saida">Saída</option>
+            </select>
+            <select value={filters.order} onChange={(e) => setFilters({ ...filters, order: e.target.value })} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+              <option value="date_desc">Mais recentes</option>
+              <option value="date_asc">Mais antigos</option>
+              <option value="amount_desc">Maior valor</option>
+              <option value="amount_asc">Menor valor</option>
+            </select>
+            <select value={filters.account_id} onChange={(e) => setFilters({ ...filters, account_id: e.target.value })} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+              <option value="">Todas as contas</option>
+              {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+            </select>
+            <select value={filters.category_id} onChange={(e) => setFilters({ ...filters, category_id: e.target.value })} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+              <option value="">Todas as categorias</option>
+              {categories.map((category: any) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+            <input value={filters.date_from} onChange={(e) => setFilters({ ...filters, date_from: e.target.value })} type="date" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
+            <input value={filters.date_to} onChange={(e) => setFilters({ ...filters, date_to: e.target.value })} type="date" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', color: '#475467', fontSize: 14 }}>
+            <span><strong>{launches.length}</strong> lançamentos exibidos</span>
+            <span>Entradas filtradas: <strong>R$ {totals.entries.toLocaleString('pt-BR')}</strong></span>
+            <span>Saídas filtradas: <strong>R$ {totals.exits.toLocaleString('pt-BR')}</strong></span>
+            <button onClick={() => setFilters({ status: '', type: '', account_id: '', category_id: '', date_from: '', date_to: '', q: '', order: 'date_desc' })} style={{ background: 'transparent', border: 0, color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}>Limpar filtros</button>
+          </div>
+        </div>
+      </div>
+
       {sessionLoading || loading ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 24, color: '#475467' }}>Carregando lançamentos...</div>
       ) : !companyId ? (
@@ -172,8 +238,8 @@ export default function LancamentosPage() {
         </div>
       ) : (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 24 }}>
-          <div style={{ fontWeight: 700 }}>Ainda não há lançamentos registrados.</div>
-          <div style={{ marginTop: 8, color: '#475467' }}>Cadastre a primeira entrada ou saída para começar a formar saldo, DFC e projeção.</div>
+          <div style={{ fontWeight: 700 }}>Nenhum lançamento encontrado com os filtros atuais.</div>
+          <div style={{ marginTop: 8, color: '#475467' }}>Ajuste período, conta, categoria, tipo ou busca textual para ampliar a leitura.</div>
         </div>
       )}
     </AppShell>
