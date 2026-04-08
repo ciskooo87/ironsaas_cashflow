@@ -10,50 +10,81 @@ function formatMoney(value: number | string | undefined) {
   return `R$ ${Number(value || 0).toLocaleString('pt-BR')}`;
 }
 
-function SimpleBarChart({ items, positiveColor = '#12B76A', negativeColor = '#F04438' }: { items: { label: string; value: number }[]; positiveColor?: string; negativeColor?: string }) {
+function ExecutiveBarChart({ title, subtitle, items }: { title: string; subtitle?: string; items: { label: string; value: number; tone?: 'positive' | 'negative' | 'neutral' }[] }) {
   const max = Math.max(...items.map((item) => Math.abs(item.value)), 1);
+  const colors = {
+    positive: { fill: '#12B76A', bg: '#ECFDF3', text: '#027A48' },
+    negative: { fill: '#F04438', bg: '#FEF3F2', text: '#B42318' },
+    neutral: { fill: '#155EEF', bg: '#EFF4FF', text: '#004EEB' },
+  } as const;
+
   return (
-    <div style={{ display: 'grid', gap: 10 }}>
-      {items.map((item) => {
-        const width = `${(Math.abs(item.value) / max) * 100}%`;
-        const color = item.value >= 0 ? positiveColor : negativeColor;
-        return (
-          <div key={item.label} style={{ display: 'grid', gap: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#475467' }}>
-              <span>{item.label}</span>
-              <strong>{formatMoney(item.value)}</strong>
+    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+      <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>{title}</div>
+      {subtitle ? <div style={{ marginTop: 8, color: '#667085', fontSize: 14 }}>{subtitle}</div> : null}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 18, color: '#98A2B3', fontSize: 12, fontWeight: 700 }}>
+        <span>0</span>
+        <span>{formatMoney(max)}</span>
+      </div>
+      <div style={{ marginTop: 8, display: 'grid', gap: 16 }}>
+        {items.map((item) => {
+          const tone = item.tone ?? (item.value >= 0 ? 'positive' : 'negative');
+          const palette = colors[tone];
+          const width = `${Math.max((Math.abs(item.value) / max) * 100, 6)}%`;
+          return (
+            <div key={item.label} style={{ display: 'grid', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, color: '#344054' }}>{item.label}</span>
+                <span style={{ color: palette.text, background: palette.bg, borderRadius: 999, padding: '4px 10px', fontSize: 12, fontWeight: 800 }}>{formatMoney(item.value)}</span>
+              </div>
+              <div style={{ position: 'relative', height: 18, borderRadius: 999, background: 'repeating-linear-gradient(to right, #f2f4f7 0, #f2f4f7 24%, #e4e7ec 25%)', overflow: 'hidden' }}>
+                <div style={{ width, height: '100%', borderRadius: 999, background: `linear-gradient(90deg, ${palette.fill} 0%, ${palette.fill}CC 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8, color: '#fff', fontSize: 11, fontWeight: 800 }}>
+                  {formatMoney(item.value)}
+                </div>
+              </div>
             </div>
-            <div style={{ height: 10, background: '#f2f4f7', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ width, height: '100%', background: color, borderRadius: 999 }} />
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function ForecastMiniChart({ points }: { points: { day: number; projected_balance: number }[] }) {
+function ExecutiveForecastChart({ points }: { points: { day: number; projected_balance: number }[] }) {
   if (!points?.length) return null;
-  const width = 360;
-  const height = 120;
+  const width = 520;
+  const height = 220;
+  const pad = 28;
   const min = Math.min(...points.map((p) => p.projected_balance));
   const max = Math.max(...points.map((p) => p.projected_balance));
   const range = Math.max(max - min, 1);
-  const coords = points.map((point, index) => {
-    const x = (index / Math.max(points.length - 1, 1)) * (width - 20) + 10;
-    const y = height - (((point.projected_balance - min) / range) * (height - 20) + 10);
-    return `${x},${y}`;
-  }).join(' ');
+  const yFor = (value: number) => height - pad - ((value - min) / range) * (height - pad * 2);
+  const xFor = (index: number) => pad + (index / Math.max(points.length - 1, 1)) * (width - pad * 2);
+  const coords = points.map((point, index) => `${xFor(index)},${yFor(point.projected_balance)}`).join(' ');
+  const area = `${pad},${height - pad} ${coords} ${width - pad},${height - pad}`;
+  const yTicks = [max, max - range / 2, min];
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 140, background: '#f8fafc', borderRadius: 16, border: '1px solid #eaecf0' }}>
-      <polyline fill="none" stroke="#155EEF" strokeWidth="3" points={coords} />
-      {points.map((point, index) => {
-        const x = (index / Math.max(points.length - 1, 1)) * (width - 20) + 10;
-        const y = height - (((point.projected_balance - min) / range) * (height - 20) + 10);
-        return <circle key={point.day} cx={x} cy={y} r="3.5" fill="#155EEF" />;
-      })}
-    </svg>
+    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+      <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>Projeção do caixa</div>
+      <div style={{ marginTop: 8, color: '#667085', fontSize: 14 }}>Curva dos próximos dias com grade visual para leitura rápida.</div>
+      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 240, marginTop: 16, overflow: 'visible' }}>
+        {yTicks.map((tick, i) => (
+          <g key={i}>
+            <line x1={pad} y1={yFor(tick)} x2={width - pad} y2={yFor(tick)} stroke="#EAECF0" strokeDasharray="4 4" />
+            <text x={0} y={yFor(tick) + 4} fontSize="11" fill="#98A2B3">{formatMoney(tick)}</text>
+          </g>
+        ))}
+        <polyline fill="rgba(21,94,239,0.10)" stroke="none" points={area} />
+        <polyline fill="none" stroke="#155EEF" strokeWidth="4" points={coords} />
+        {points.map((point, index) => (
+          <g key={point.day}>
+            <circle cx={xFor(index)} cy={yFor(point.projected_balance)} r="5" fill="#155EEF" />
+            <text x={xFor(index)} y={height - 6} textAnchor="middle" fontSize="11" fill="#98A2B3">D{point.day}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }
 
@@ -157,12 +188,12 @@ export default function DashboardPage() {
       title="Dashboard"
       subtitle="Leitura executiva do caixa da empresa autenticada, com sinais operacionais, recorte por período e risco projetado."
     >
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20, display: 'grid', gap: 14, marginBottom: 20 }}>
-        <div style={{ fontWeight: 700 }}>Recorte por período</div>
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, display: 'grid', gap: 14, marginBottom: 20, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>Recorte por período</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
-          <input value={period.date_from} onChange={(e) => setPeriod({ ...period, date_from: e.target.value })} type="date" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-          <input value={period.date_to} onChange={(e) => setPeriod({ ...period, date_to: e.target.value })} type="date" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-          <button onClick={() => setPeriod({ date_from: '', date_to: '' })} style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 12, padding: '12px 16px', fontWeight: 700 }}>Limpar período</button>
+          <input value={period.date_from} onChange={(e) => setPeriod({ ...period, date_from: e.target.value })} type="date" style={{ padding: 14, borderRadius: 14, border: '1px solid #d0d5dd', fontSize: 14 }} />
+          <input value={period.date_to} onChange={(e) => setPeriod({ ...period, date_to: e.target.value })} type="date" style={{ padding: 14, borderRadius: 14, border: '1px solid #d0d5dd', fontSize: 14 }} />
+          <button onClick={() => setPeriod({ date_from: '', date_to: '' })} style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 14, padding: '12px 16px', fontWeight: 800 }}>Limpar período</button>
         </div>
         {data ? (
           <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', color: '#475467', fontSize: 14 }}>
@@ -174,9 +205,7 @@ export default function DashboardPage() {
         ) : null}
       </div>
 
-      {error ? (
-        <div style={{ background: '#fff', border: '1px solid #fecdca', borderRadius: 18, padding: 24, color: '#b42318', marginBottom: 20 }}>{error}</div>
-      ) : null}
+      {error ? <div style={{ background: '#fff', border: '1px solid #fecdca', borderRadius: 18, padding: 24, color: '#b42318', marginBottom: 20 }}>{error}</div> : null}
 
       {sessionLoading || loading ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 24, color: '#475467' }}>Carregando visão financeira...</div>
@@ -200,111 +229,77 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <div style={{ marginBottom: 16, color: health.color, fontWeight: 700 }}>Saúde do caixa: {health.label}</div>
+          <div style={{ marginBottom: 16, color: health.color, fontWeight: 800, fontSize: 16 }}>Saúde do caixa: {health.label}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
             {cards.map(([title, value]) => (
-              <div key={title} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>{title}</div>
-                <div style={{ marginTop: 10, fontSize: 28, fontWeight: 700 }}>{value}</div>
+              <div key={title} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>{title}</div>
+                <div style={{ marginTop: 12, fontSize: 32, fontWeight: 800 }}>{value}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 24 }}>
+          <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24 }}>
             <div style={{ display: 'grid', gap: 24 }}>
-              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Leitura operacional</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
-                  <div><strong>Lançamentos</strong><div>{data?.total_launches ?? '—'}</div></div>
-                  <div><strong>Ticket médio de entrada</strong><div>{data ? formatMoney(data.avg_ticket_inflow) : '—'}</div></div>
-                  <div><strong>Ticket médio de saída</strong><div>{data ? formatMoney(data.avg_ticket_outflow) : '—'}</div></div>
-                </div>
-                <div style={{ marginTop: 16, color: '#475467', lineHeight: 1.7 }}>
-                  {Number(data?.net_flow || 0) >= 0
-                    ? 'O período observado ainda fecha positivo no fluxo líquido. O foco deve ser sustentar disciplina de caixa e evitar deterioração do saldo projetado.'
-                    : 'O período observado fecha com consumo líquido de caixa. Vale revisar rapidamente as saídas, a estrutura de pagamento e a velocidade de recebimento.'}
-                </div>
-              </div>
+              <ExecutiveBarChart
+                title="Leitura operacional"
+                subtitle="Resumo visual do comportamento do período corrente."
+                items={[
+                  { label: 'Entradas', value: Number(data?.inflows || 0), tone: 'positive' },
+                  { label: 'Saídas', value: Number(data?.outflows || 0), tone: 'negative' },
+                  { label: 'Fluxo líquido', value: Number(data?.net_flow || 0), tone: Number(data?.net_flow || 0) >= 0 ? 'positive' : 'negative' },
+                ]}
+              />
 
-              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>DFC</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
-                  <div><strong>Operacional líquido</strong><div>{dfc ? formatMoney(dfc.operational_inflows - dfc.operational_outflows) : '—'}</div></div>
-                  <div><strong>Investimento líquido</strong><div>{dfc ? formatMoney(dfc.investment_inflows - dfc.investment_outflows) : '—'}</div></div>
-                  <div><strong>Financiamento líquido</strong><div>{dfc ? formatMoney(dfc.financing_inflows - dfc.financing_outflows) : '—'}</div></div>
-                </div>
-                <div style={{ marginTop: 18 }}>
-                  <SimpleBarChart items={[
-                    { label: 'Operacional', value: dfc ? Number(dfc.operational_inflows) - Number(dfc.operational_outflows) : 0 },
-                    { label: 'Investimento', value: dfc ? Number(dfc.investment_inflows) - Number(dfc.investment_outflows) : 0 },
-                    { label: 'Financiamento', value: dfc ? Number(dfc.financing_inflows) - Number(dfc.financing_outflows) : 0 },
-                  ]} positiveColor="#155EEF" negativeColor="#F04438" />
-                </div>
-                <div style={{ marginTop: 16, fontWeight: 700 }}>Geração líquida de caixa: {dfc ? formatMoney(dfc.net_cash_generation) : '—'}</div>
-              </div>
+              <ExecutiveBarChart
+                title="DFC executivo"
+                subtitle="Contribuição de cada bloco do fluxo de caixa." 
+                items={[
+                  { label: 'Operacional', value: dfc ? Number(dfc.operational_inflows) - Number(dfc.operational_outflows) : 0, tone: 'neutral' },
+                  { label: 'Investimento', value: dfc ? Number(dfc.investment_inflows) - Number(dfc.investment_outflows) : 0, tone: 'neutral' },
+                  { label: 'Financiamento', value: dfc ? Number(dfc.financing_inflows) - Number(dfc.financing_outflows) : 0, tone: 'neutral' },
+                ]}
+              />
             </div>
 
             <div style={{ display: 'grid', gap: 24 }}>
-              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Projeção de caixa</div>
+              <ExecutiveForecastChart points={forecast?.points?.slice(0, 7) ?? []} />
+
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>Leitura da projeção</div>
                 <div style={{ marginTop: 12 }}>Risco de liquidez: <strong>{forecast?.liquidity_risk ?? '—'}</strong></div>
                 <div style={{ marginTop: 8 }}>Saldo atual: <strong>{forecast ? formatMoney(forecast.current_balance) : '—'}</strong></div>
-                <div style={{ marginTop: 8 }}>Média diária de entradas: <strong>{forecast ? formatMoney(forecast.average_daily_inflows) : '—'}</strong></div>
-                <div style={{ marginTop: 8 }}>Média diária de saídas: <strong>{forecast ? formatMoney(forecast.average_daily_outflows) : '—'}</strong></div>
                 <div style={{ marginTop: 8 }}>Entradas recorrentes mensais: <strong>{forecast ? formatMoney(forecast.recurring_monthly_inflows) : '—'}</strong></div>
                 <div style={{ marginTop: 8 }}>Saídas recorrentes mensais: <strong>{forecast ? formatMoney(forecast.recurring_monthly_outflows) : '—'}</strong></div>
                 <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
-                <div style={{ marginTop: 12, color: '#0f172a', fontWeight: 700 }}>{projectedRunwayText}</div>
-                <div style={{ marginTop: 16 }}>
-                  <ForecastMiniChart points={forecast?.points?.slice(0, 7) ?? []} />
-                </div>
-                <div style={{ marginTop: 16, display: 'grid', gap: 6 }}>
-                  {forecast?.points?.slice(0, 7).map((point: any) => (
-                    <div key={point.day} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, fontSize: 14, color: '#475467', borderBottom: '1px solid #f2f4f7', paddingBottom: 6 }}>
-                      <div>
-                        <span>Dia {point.day}</span>
-                        {(point.recurring_inflows || point.recurring_outflows) ? <div style={{ fontSize: 12, color: '#667085' }}>Recorrências: +{formatMoney(point.recurring_inflows)} / -{formatMoney(point.recurring_outflows)}</div> : null}
-                      </div>
-                      <strong>{formatMoney(point.projected_balance)}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Prioridades</div>
-                <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-                  <Link href="/lancamentos/novo" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 700 }}>Registrar nova movimentação</Link>
-                  <Link href="/recorrencias" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 700 }}>Ajustar fluxos recorrentes</Link>
-                  <Link href="/categorias" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 700 }}>Revisar classificação financeira</Link>
-                </div>
+                <div style={{ marginTop: 12, color: '#0f172a', fontWeight: 800 }}>{projectedRunwayText}</div>
               </div>
             </div>
           </div>
 
           <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Pagamentos do dia corrente</div>
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>Pagamentos do dia corrente</div>
               <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
                 {todayPayments.length ? todayPayments.map((payment: any) => (
-                  <div key={payment.id} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#f8fafc' }}>
+                  <div key={payment.id} style={{ border: '1px solid #e5e7eb', borderRadius: 16, padding: 16, background: '#f8fafc' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                       <div>
                         <div style={{ fontWeight: 700 }}>{payment.description}</div>
                         <div style={{ marginTop: 6, color: '#475467', fontSize: 14 }}>{payment.category_name ?? 'Sem categoria'} · {payment.launch_date}</div>
                       </div>
-                      <div style={{ fontWeight: 700 }}>{formatMoney(payment.amount)}</div>
+                      <div style={{ fontWeight: 800 }}>{formatMoney(payment.amount)}</div>
                     </div>
                   </div>
                 )) : <div style={{ color: '#667085' }}>Nenhum pagamento confirmado para hoje.</div>}
               </div>
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Alertas</div>
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>Alertas</div>
               <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
                 {alerts.length ? alerts.map((alert, idx) => (
-                  <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#f8fafc' }}>
+                  <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 16, padding: 16, background: '#f8fafc' }}>
                     <div style={{ fontWeight: 700 }}>{alert.title}</div>
                     <div style={{ marginTop: 8, color: '#475467' }}>{alert.description}</div>
                     <div style={{ marginTop: 8, color: '#0f172a' }}>{alert.recommendation}</div>
