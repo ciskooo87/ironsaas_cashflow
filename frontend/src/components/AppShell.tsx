@@ -34,8 +34,16 @@ export function AppShell({ title, subtitle, children, actions }: { title: string
         <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', border: '1px solid #eaecf0', borderRadius: 28, padding: 28, boxShadow: '0 24px 60px rgba(15,23,42,0.08)', marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
-              <div style={{ fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800 }}>IronSaaS Cashflow</div>
-              <h1 style={{ margin: '12px 0 0', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.04em', color: '#101828' }}>{title}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 16, overflow: 'hidden', border: '1px solid #eaecf0', background: '#fff', boxShadow: '0 10px 24px rgba(15,23,42,0.08)', display: 'grid', placeItems: 'center' }}>
+                  <img src="/cashflow/brand/ironcore-symbol.png" alt="Ironcore" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800 }}>Ironcore</div>
+                  <div style={{ fontSize: 15, color: '#475467', fontWeight: 700 }}>Cashflow</div>
+                </div>
+              </div>
+              <h1 style={{ margin: '16px 0 0', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.04em', color: '#101828' }}>{title}</h1>
               {subtitle ? <p style={{ color: '#475467', marginTop: 12, maxWidth: 760, fontSize: 16, lineHeight: 1.7 }}>{subtitle}</p> : null}
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
