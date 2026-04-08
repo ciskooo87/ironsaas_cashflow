@@ -10,6 +10,53 @@ function formatMoney(value: number | string | undefined) {
   return `R$ ${Number(value || 0).toLocaleString('pt-BR')}`;
 }
 
+function SimpleBarChart({ items, positiveColor = '#12B76A', negativeColor = '#F04438' }: { items: { label: string; value: number }[]; positiveColor?: string; negativeColor?: string }) {
+  const max = Math.max(...items.map((item) => Math.abs(item.value)), 1);
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {items.map((item) => {
+        const width = `${(Math.abs(item.value) / max) * 100}%`;
+        const color = item.value >= 0 ? positiveColor : negativeColor;
+        return (
+          <div key={item.label} style={{ display: 'grid', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#475467' }}>
+              <span>{item.label}</span>
+              <strong>{formatMoney(item.value)}</strong>
+            </div>
+            <div style={{ height: 10, background: '#f2f4f7', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width, height: '100%', background: color, borderRadius: 999 }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ForecastMiniChart({ points }: { points: { day: number; projected_balance: number }[] }) {
+  if (!points?.length) return null;
+  const width = 360;
+  const height = 120;
+  const min = Math.min(...points.map((p) => p.projected_balance));
+  const max = Math.max(...points.map((p) => p.projected_balance));
+  const range = Math.max(max - min, 1);
+  const coords = points.map((point, index) => {
+    const x = (index / Math.max(points.length - 1, 1)) * (width - 20) + 10;
+    const y = height - (((point.projected_balance - min) / range) * (height - 20) + 10);
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 140, background: '#f8fafc', borderRadius: 16, border: '1px solid #eaecf0' }}>
+      <polyline fill="none" stroke="#155EEF" strokeWidth="3" points={coords} />
+      {points.map((point, index) => {
+        const x = (index / Math.max(points.length - 1, 1)) * (width - 20) + 10;
+        const y = height - (((point.projected_balance - min) / range) * (height - 20) + 10);
+        return <circle key={point.day} cx={x} cy={y} r="3.5" fill="#155EEF" />;
+      })}
+    </svg>
+  );
+}
+
 export default function DashboardPage() {
   const { companyId, loading: sessionLoading } = useSessionUser();
   const [data, setData] = useState<any | null>(null);
