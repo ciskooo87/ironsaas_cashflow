@@ -35,16 +35,16 @@ img {
   overflow-x: auto;
 }
 
-.oc-chip-row {
+.oc-chip-row,
+.oc-mobile-stack {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.oc-mobile-stack {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.oc-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 1024px) {
@@ -61,40 +61,42 @@ img {
 
 @media (max-width: 768px) {
   .oc-page-pad {
-    padding: 18px 14px 40px !important;
+    padding: 16px 12px 32px !important;
   }
 
   .oc-shell-card {
-    padding: 18px !important;
-    border-radius: 22px !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
   }
 
   .oc-title {
-    font-size: 30px !important;
+    font-size: 28px !important;
     line-height: 1.08 !important;
   }
 
   .oc-subtitle {
     font-size: 14px !important;
-    line-height: 1.65 !important;
+    line-height: 1.6 !important;
   }
 
   .oc-hero-title {
-    font-size: 34px !important;
-    line-height: 1.05 !important;
+    font-size: 30px !important;
+    line-height: 1.06 !important;
   }
 
   .oc-card-title {
-    font-size: 20px !important;
+    font-size: 18px !important;
+    line-height: 1.2 !important;
   }
 
   .oc-card-value {
-    font-size: 26px !important;
+    font-size: 24px !important;
   }
 
   .oc-actions,
   .oc-header-top,
-  .oc-mobile-stack {
+  .oc-mobile-stack,
+  .oc-row-between {
     flex-direction: column !important;
     align-items: stretch !important;
   }
@@ -102,23 +104,35 @@ img {
   .oc-nav {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+  }
+
+  .oc-nav a {
+    text-align: center;
+    padding: 12px 10px !important;
+    font-size: 13px;
   }
 
   .oc-form-grid,
   .oc-filter-grid,
   .oc-stat-grid,
-  .oc-edit-grid {
+  .oc-edit-grid,
+  .oc-grid-four {
     grid-template-columns: 1fr !important;
-  }
-
-  .oc-row-between {
-    flex-direction: column !important;
-    align-items: flex-start !important;
   }
 
   .oc-right-col {
     width: 100%;
     text-align: left !important;
+  }
+
+  .oc-right-col > div,
+  .oc-right-col button {
+    width: 100%;
+  }
+
+  .oc-mobile-stack > * {
+    width: 100%;
   }
 
   .oc-table-mobile thead {
@@ -142,5 +156,14 @@ img {
     border: 0 !important;
     padding: 6px 0 !important;
     text-align: left !important;
+  }
+
+  svg {
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  input, select, textarea, button {
+    font-size: 16px !important;
   }
 }

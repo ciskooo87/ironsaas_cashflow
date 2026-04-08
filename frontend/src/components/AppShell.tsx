@@ -35,7 +35,7 @@ export function AppShell({ title, subtitle, children, actions }: { title: string
           <div className="oc-header-top" style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ height: 56, borderRadius: 18, overflow: 'hidden', border: '1px solid #eaecf0', background: '#fff', boxShadow: '0 10px 24px rgba(15,23,42,0.08)', display: 'grid', placeItems: 'center', padding: '0 14px' }}>
+                <div className="oc-shell-card" style={{ height: 56, borderRadius: 18, overflow: 'hidden', border: '1px solid #eaecf0', background: '#fff', boxShadow: '0 10px 24px rgba(15,23,42,0.08)', display: 'grid', placeItems: 'center', padding: '0 14px' }}>
                   <img src="/cashflow/brand/ironcore-logo-v2.jpg" alt="Ironcore" style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
                 </div>
                 <div>
