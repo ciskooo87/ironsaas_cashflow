@@ -85,6 +85,21 @@ def list_accounts(company_id: int, db: Session = Depends(get_db), _: User = Depe
     return list(db.scalars(select(Account).where(Account.company_id == company_id)).all())
 
 
+@router.put('/accounts/{account_id}', response_model=AccountOut)
+def update_account(account_id: int, payload: AccountUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(Account, account_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='account_not_found')
+    for key, value in payload.model_dump().items():
+        setattr(row, key, value)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    recalculate_account_balance(db, row.id)
+    db.refresh(row)
+    return row
+
+
 @router.post('/categories', response_model=CategoryOut)
 def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     row = Category(**payload.model_dump())
