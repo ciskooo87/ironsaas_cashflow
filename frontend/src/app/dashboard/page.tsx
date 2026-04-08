@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [forecast, setForecast] = useState<any | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [period, setPeriod] = useState({ date_from: '', date_to: '' });
 
   useEffect(() => {
     if (!companyId) {
@@ -25,19 +27,38 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
+    setError('');
+    const launchesQuery = new URLSearchParams();
+    if (period.date_from) launchesQuery.set('date_from', period.date_from);
+    if (period.date_to) launchesQuery.set('date_to', period.date_to);
+    const suffix = launchesQuery.toString() ? `?${launchesQuery.toString()}` : '';
+
     Promise.all([
-      apiGet(`/companies/${companyId}/dashboard`).catch(() => null),
-      apiGet(`/companies/${companyId}/dfc`).catch(() => null),
-      apiGet(`/companies/${companyId}/forecast`).catch(() => null),
+      apiGet(`/companies/${companyId}/dashboard`).catch((e) => e),
+      apiGet(`/companies/${companyId}/dfc`).catch((e) => e),
+      apiGet(`/companies/${companyId}/forecast`).catch((e) => e),
       apiGet(`/companies/${companyId}/alerts`).catch(() => []),
-    ]).then(([dashboardData, dfcData, forecastData, alertsData]) => {
-      setData(dashboardData);
+      apiGet(`/companies/${companyId}/launches${suffix}`).catch((e) => e),
+    ]).then(([dashboardData, dfcData, forecastData, alertsData, launchesData]) => {
+      if (dashboardData instanceof Error || dfcData instanceof Error || forecastData instanceof Error || launchesData instanceof Error) {
+        const mainError = [dashboardData, dfcData, forecastData, launchesData].find((item) => item instanceof Error) as Error | undefined;
+        setError(mainError?.message === 'session_expired' ? 'Sua sessão expirou. Faça login novamente para continuar.' : 'Não foi possível carregar o dashboard agora.');
+        setLoading(false);
+        return;
+      }
+
+      const filteredLaunches = Array.isArray(launchesData) ? launchesData : [];
+      const filteredInflows = filteredLaunches.filter((launch: any) => launch.type === 'entrada' && launch.status !== 'cancelado').reduce((acc: number, launch: any) => acc + Number(launch.amount), 0);
+      const filteredOutflows = filteredLaunches.filter((launch: any) => launch.type === 'saida' && launch.status !== 'cancelado').reduce((acc: number, launch: any) => acc + Number(launch.amount), 0);
+      const filteredNet = filteredInflows - filteredOutflows;
+
+      setData({ ...dashboardData, filtered_launches: filteredLaunches.length, filtered_inflows: filteredInflows, filtered_outflows: filteredOutflows, filtered_net_flow: filteredNet });
       setDfc(dfcData);
       setForecast(forecastData);
       setAlerts(alertsData);
       setLoading(false);
     });
-  }, [companyId]);
+  }, [companyId, period]);
 
   const health = useMemo(() => {
     if (!data || !dfc) return { label: 'Sem leitura', color: '#667085' };
@@ -68,9 +89,30 @@ export default function DashboardPage() {
   return (
     <AppShell
       title="Dashboard"
-      subtitle="Leitura executiva do caixa da empresa autenticada, com sinais operacionais e risco projetado."
+      subtitle="Leitura executiva do caixa da empresa autenticada, com sinais operacionais, recorte por período e risco projetado."
       actions={<Link href="/lancamentos/novo" style={{ background: '#0f172a', color: '#fff', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Novo lançamento</Link>}
     >
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20, display: 'grid', gap: 14, marginBottom: 20 }}>
+        <div style={{ fontWeight: 700 }}>Recorte por período</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+          <input value={period.date_from} onChange={(e) => setPeriod({ ...period, date_from: e.target.value })} type="date" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
+          <input value={period.date_to} onChange={(e) => setPeriod({ ...period, date_to: e.target.value })} type="date" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
+          <button onClick={() => setPeriod({ date_from: '', date_to: '' })} style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 12, padding: '12px 16px', fontWeight: 700 }}>Limpar período</button>
+        </div>
+        {data ? (
+          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', color: '#475467', fontSize: 14 }}>
+            <span>Lançamentos no recorte: <strong>{data.filtered_launches ?? 0}</strong></span>
+            <span>Entradas no recorte: <strong>{formatMoney(data.filtered_inflows)}</strong></span>
+            <span>Saídas no recorte: <strong>{formatMoney(data.filtered_outflows)}</strong></span>
+            <span>Fluxo no recorte: <strong>{formatMoney(data.filtered_net_flow)}</strong></span>
+          </div>
+        ) : null}
+      </div>
+
+      {error ? (
+        <div style={{ background: '#fff', border: '1px solid #fecdca', borderRadius: 18, padding: 24, color: '#b42318', marginBottom: 20 }}>{error}</div>
+      ) : null}
+
       {sessionLoading || loading ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 24, color: '#475467' }}>Carregando visão financeira...</div>
       ) : !companyId ? (
@@ -108,18 +150,9 @@ export default function DashboardPage() {
               <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
                 <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Leitura operacional</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
-                  <div>
-                    <strong>Lançamentos</strong>
-                    <div>{data?.total_launches ?? '—'}</div>
-                  </div>
-                  <div>
-                    <strong>Ticket médio de entrada</strong>
-                    <div>{data ? formatMoney(data.avg_ticket_inflow) : '—'}</div>
-                  </div>
-                  <div>
-                    <strong>Ticket médio de saída</strong>
-                    <div>{data ? formatMoney(data.avg_ticket_outflow) : '—'}</div>
-                  </div>
+                  <div><strong>Lançamentos</strong><div>{data?.total_launches ?? '—'}</div></div>
+                  <div><strong>Ticket médio de entrada</strong><div>{data ? formatMoney(data.avg_ticket_inflow) : '—'}</div></div>
+                  <div><strong>Ticket médio de saída</strong><div>{data ? formatMoney(data.avg_ticket_outflow) : '—'}</div></div>
                 </div>
                 <div style={{ marginTop: 16, color: '#475467', lineHeight: 1.7 }}>
                   {Number(data?.net_flow || 0) >= 0

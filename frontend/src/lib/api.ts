@@ -1,11 +1,27 @@
 "use client";
 
-import { getToken } from '@/lib/auth';
+import { clearToken, getToken } from '@/lib/auth';
+import { clearStoredUser } from '@/lib/session';
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/cashflow-api';
 
 async function parseResponse(res: Response) {
-  if (!res.ok) throw new Error(`api_error_${res.status}`);
+  if (res.status === 401) {
+    clearToken();
+    clearStoredUser();
+    throw new Error('session_expired');
+  }
+
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const data = await res.json();
+      detail = data?.detail ? String(data.detail) : '';
+    } catch {
+      detail = '';
+    }
+    throw new Error(detail ? `api_error_${res.status}:${detail}` : `api_error_${res.status}`);
+  }
   return res.json();
 }
 
