@@ -10,7 +10,7 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.models.entities import Company, User, Account, Category, Launch, RecurringRule
 from app.schemas.auth import LoginInput, TokenOutput
 from app.schemas.company import CompanyCreate, CompanyOut
-from app.schemas.account import AccountCreate, AccountOut
+from app.schemas.account import AccountCreate, AccountOut, AccountUpdate
 from app.schemas.category import CategoryCreate, CategoryOut
 from app.schemas.launch import LaunchCreate, LaunchOut, LaunchUpdate
 from app.schemas.user import UserCreate, UserOut
