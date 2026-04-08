@@ -8,6 +8,8 @@ type CategoryFormProps = {
   onCreated?: () => void;
 };
 
+const fieldStyle = { padding: 14, borderRadius: 14, border: '1px solid #d0d5dd', background: '#fcfcfd', fontSize: 14 } as const;
+
 export function CategoryForm({ companyId, onCreated }: CategoryFormProps) {
   const [status, setStatus] = useState('');
 
@@ -34,20 +36,23 @@ export function CategoryForm({ companyId, onCreated }: CategoryFormProps) {
   }
 
   return (
-    <form onSubmit={submit} style={{ display: 'grid', gap: 12, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-      <h2 style={{ margin: 0 }}>Nova categoria</h2>
-      <input name="name" placeholder="Nome da categoria" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <select name="group_type" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+    <form onSubmit={submit} style={{ display: 'grid', gap: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+      <div>
+        <h2 style={{ margin: 0, fontSize: 24 }}>Nova categoria</h2>
+        <p style={{ margin: '8px 0 0', color: '#667085', fontSize: 14 }}>Estrutura que sustenta DFC, agrupamento e leitura financeira.</p>
+      </div>
+      <input name="name" placeholder="Nome da categoria" required style={fieldStyle} />
+      <select name="group_type" style={fieldStyle}>
         <option value="operacional">Operacional</option>
         <option value="investimento">Investimento</option>
         <option value="financiamento">Financiamento</option>
       </select>
-      <select name="direction" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+      <select name="direction" style={fieldStyle}>
         <option value="ambos">Ambos</option>
         <option value="entrada">Entrada</option>
         <option value="saida">Saída</option>
       </select>
-      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }} disabled={!companyId}>Criar categoria</button>
+      <button type="submit" style={{ background: 'linear-gradient(135deg, #111827 0%, #1d2939 100%)', color: '#fff', border: 0, borderRadius: 14, padding: '14px 18px', fontWeight: 800, boxShadow: '0 12px 24px rgba(17,24,39,0.18)' }} disabled={!companyId}>Criar categoria</button>
       {status ? <div style={{ color: '#475467', fontSize: 14 }}>{status}</div> : null}
     </form>
   );

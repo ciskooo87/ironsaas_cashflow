@@ -8,17 +8,10 @@ type RecurringRuleFormProps = {
   onCreated?: () => void;
 };
 
-type Account = {
-  id: number;
-  name: string;
-  type: string;
-};
+type Account = { id: number; name: string; type: string };
+type Category = { id: number; name: string; direction: string };
 
-type Category = {
-  id: number;
-  name: string;
-  direction: string;
-};
+const fieldStyle = { padding: 14, borderRadius: 14, border: '1px solid #d0d5dd', background: '#fcfcfd', fontSize: 14 } as const;
 
 export function RecurringRuleForm({ companyId, onCreated }: RecurringRuleFormProps) {
   const [status, setStatus] = useState('');
@@ -36,10 +29,7 @@ export function RecurringRuleForm({ companyId, onCreated }: RecurringRuleFormPro
     apiGet(`/companies/${companyId}/categories`).then(setCategories).catch(() => setCategories([]));
   }, [companyId]);
 
-  const availableCategories = useMemo(
-    () => categories.filter((category) => category.direction === 'ambos' || category.direction === ruleType),
-    [categories, ruleType],
-  );
+  const availableCategories = useMemo(() => categories.filter((category) => category.direction === 'ambos' || category.direction === ruleType), [categories, ruleType]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,34 +60,33 @@ export function RecurringRuleForm({ companyId, onCreated }: RecurringRuleFormPro
   }
 
   return (
-    <form onSubmit={submit} style={{ display: 'grid', gap: 12, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-      <h2 style={{ margin: 0 }}>Nova recorrência</h2>
-      <input name="description" placeholder="Descrição" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <input name="amount" type="number" step="0.01" placeholder="Valor" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <select name="type" value={ruleType} onChange={(e) => setRuleType(e.target.value)} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+    <form onSubmit={submit} style={{ display: 'grid', gap: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
+      <div>
+        <h2 style={{ margin: 0, fontSize: 24 }}>Nova recorrência</h2>
+        <p style={{ margin: '8px 0 0', color: '#667085', fontSize: 14 }}>Fluxos previsíveis para melhorar projeção e disciplina do caixa.</p>
+      </div>
+      <input name="description" placeholder="Descrição" required style={fieldStyle} />
+      <input name="amount" type="number" step="0.01" placeholder="Valor" required style={fieldStyle} />
+      <select name="type" value={ruleType} onChange={(e) => setRuleType(e.target.value)} style={fieldStyle}>
         <option value="entrada">Entrada</option>
         <option value="saida">Saída</option>
       </select>
-      <select name="frequency" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+      <select name="frequency" style={fieldStyle}>
         <option value="monthly">Mensal</option>
         <option value="weekly">Semanal</option>
       </select>
-      <input name="day_of_month" type="number" placeholder="Dia do mês" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <select name="account_id" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} defaultValue="">
+      <input name="day_of_month" type="number" placeholder="Dia do mês" style={fieldStyle} />
+      <select name="account_id" required style={fieldStyle} defaultValue="">
         <option value="" disabled>Selecione a conta</option>
-        {accounts.map((account) => (
-          <option key={account.id} value={account.id}>{account.name} · {account.type}</option>
-        ))}
+        {accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {account.type}</option>)}
       </select>
-      <select name="category_id" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} defaultValue="">
+      <select name="category_id" style={fieldStyle} defaultValue="">
         <option value="">Sem categoria</option>
-        {availableCategories.map((category) => (
-          <option key={category.id} value={category.id}>{category.name}</option>
-        ))}
+        {availableCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
       </select>
       {!accounts.length ? <div style={{ color: '#B42318', fontSize: 14 }}>Crie ao menos uma conta antes de cadastrar recorrências.</div> : null}
       {!categories.length ? <div style={{ color: '#B54708', fontSize: 14 }}>Ainda não há categorias cadastradas para apoiar a classificação.</div> : null}
-      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }} disabled={!companyId || !accounts.length}>Criar recorrência</button>
+      <button type="submit" style={{ background: 'linear-gradient(135deg, #111827 0%, #1d2939 100%)', color: '#fff', border: 0, borderRadius: 14, padding: '14px 18px', fontWeight: 800, boxShadow: '0 12px 24px rgba(17,24,39,0.18)' }} disabled={!companyId || !accounts.length}>Criar recorrência</button>
       {status ? <div style={{ color: '#475467', fontSize: 14 }}>{status}</div> : null}
     </form>
   );
