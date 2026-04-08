@@ -4,9 +4,21 @@ from sqlalchemy.orm import Session
 from app.models.entities import Launch, Category
 
 
+def normalize_group_type(group_type: str | None) -> str:
+    mapping = {
+        'operacional': 'operational',
+        'operational': 'operational',
+        'investimento': 'investment',
+        'investment': 'investment',
+        'financiamento': 'financing',
+        'financing': 'financing',
+    }
+    return mapping.get((group_type or '').lower(), 'operational')
+
+
 def build_dfc(db: Session, company_id: int):
     launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id, Launch.status != 'cancelado')).all())
-    category_map = {c.id: c.group_type for c in db.scalars(select(Category).where(Category.company_id == company_id)).all()}
+    category_map = {c.id: normalize_group_type(c.group_type) for c in db.scalars(select(Category).where(Category.company_id == company_id)).all()}
     data = {
         'operational_inflows': Decimal('0'),
         'operational_outflows': Decimal('0'),
