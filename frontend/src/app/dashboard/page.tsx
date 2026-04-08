@@ -90,7 +90,6 @@ export default function DashboardPage() {
     <AppShell
       title="Dashboard"
       subtitle="Leitura executiva do caixa da empresa autenticada, com sinais operacionais, recorte por período e risco projetado."
-      actions={<Link href="/lancamentos/novo" style={{ background: '#0f172a', color: '#fff', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Novo lançamento</Link>}
     >
       <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20, display: 'grid', gap: 14, marginBottom: 20 }}>
         <div style={{ fontWeight: 700 }}>Recorte por período</div>

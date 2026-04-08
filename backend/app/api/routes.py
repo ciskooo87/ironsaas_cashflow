@@ -18,7 +18,7 @@ from app.schemas.dashboard import DashboardOut
 from app.schemas.dfc import DfcOut
 from app.schemas.forecast import ForecastOut
 from app.schemas.alert import AlertOut
-from app.schemas.recurring import RecurringRuleCreate, RecurringRuleOut
+from app.schemas.recurring import RecurringRuleCreate, RecurringRuleOut, RecurringRuleUpdate
 from app.services.cashflow.balance_engine import recalculate_account_balance
 from app.services.cashflow.dfc_engine import build_dfc
 from app.services.projections.forecast_engine import build_forecast
@@ -122,6 +122,27 @@ def create_recurring_rule(payload: RecurringRuleCreate, db: Session = Depends(ge
 @router.get('/companies/{company_id}/recurring-rules', response_model=list[RecurringRuleOut])
 def list_recurring_rules(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(RecurringRule).where(RecurringRule.company_id == company_id)).all())
+
+
+@router.put('/recurring-rules/{rule_id}', response_model=RecurringRuleOut)
+def update_recurring_rule(rule_id: int, payload: RecurringRuleUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(RecurringRule, rule_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='recurring_rule_not_found')
+    for key, value in payload.model_dump().items():
+        setattr(row, key, value)
+    db.add(row); db.commit(); db.refresh(row)
+    return row
+
+
+@router.delete('/recurring-rules/{rule_id}')
+def delete_recurring_rule(rule_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(RecurringRule, rule_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='recurring_rule_not_found')
+    db.delete(row)
+    db.commit()
+    return {'ok': True, 'id': rule_id}
 
 
 @router.post('/launches', response_model=LaunchOut)

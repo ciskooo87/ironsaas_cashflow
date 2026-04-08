@@ -65,3 +65,12 @@ export async function apiPut(path: string, body: any) {
   });
   return parseResponse(res);
 }
+
+export async function apiDelete(path: string) {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return parseResponse(res);
+}

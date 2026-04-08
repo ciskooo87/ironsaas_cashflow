@@ -14,6 +14,17 @@ class RecurringRuleCreate(BaseModel):
     is_active: bool = True
 
 
+class RecurringRuleUpdate(BaseModel):
+    account_id: int
+    category_id: int | None = None
+    description: str
+    amount: Decimal
+    type: str
+    frequency: str
+    day_of_month: int | None = None
+    is_active: bool = True
+
+
 class RecurringRuleOut(RecurringRuleCreate):
     id: int
 
