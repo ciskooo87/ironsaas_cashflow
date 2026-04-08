@@ -34,15 +34,20 @@ export default function DashboardPage() {
     if (period.date_to) launchesQuery.set('date_to', period.date_to);
     const suffix = launchesQuery.toString() ? `?${launchesQuery.toString()}` : '';
 
+    const today = new Date().toISOString().slice(0, 10);
+    const currentDay = Number(today.slice(-2));
+
     Promise.all([
       apiGet(`/companies/${companyId}/dashboard`).catch((e) => e),
       apiGet(`/companies/${companyId}/dfc`).catch((e) => e),
       apiGet(`/companies/${companyId}/forecast`).catch((e) => e),
       apiGet(`/companies/${companyId}/alerts`).catch(() => []),
       apiGet(`/companies/${companyId}/launches${suffix}`).catch((e) => e),
-    ]).then(([dashboardData, dfcData, forecastData, alertsData, launchesData]) => {
-      if (dashboardData instanceof Error || dfcData instanceof Error || forecastData instanceof Error || launchesData instanceof Error) {
-        const mainError = [dashboardData, dfcData, forecastData, launchesData].find((item) => item instanceof Error) as Error | undefined;
+      apiGet(`/companies/${companyId}/launches?type=saida&status=confirmado&date_from=${today}&date_to=${today}&order=amount_desc`).catch((e) => e),
+      apiGet(`/companies/${companyId}/recurring-rules`).catch((e) => e),
+    ]).then(([dashboardData, dfcData, forecastData, alertsData, launchesData, todayLaunchPaymentsData, recurringRulesData]) => {
+      if (dashboardData instanceof Error || dfcData instanceof Error || forecastData instanceof Error || launchesData instanceof Error || todayLaunchPaymentsData instanceof Error || recurringRulesData instanceof Error) {
+        const mainError = [dashboardData, dfcData, forecastData, launchesData, todayLaunchPaymentsData, recurringRulesData].find((item) => item instanceof Error) as Error | undefined;
         setError(mainError?.message === 'session_expired' ? 'Sua sessão expirou. Faça login novamente para continuar.' : 'Não foi possível carregar o dashboard agora.');
         setLoading(false);
         return;
@@ -53,10 +58,23 @@ export default function DashboardPage() {
       const filteredOutflows = filteredLaunches.filter((launch: any) => launch.type === 'saida' && launch.status !== 'cancelado').reduce((acc: number, launch: any) => acc + Number(launch.amount), 0);
       const filteredNet = filteredInflows - filteredOutflows;
 
+      const todayLaunchPayments = Array.isArray(todayLaunchPaymentsData) ? todayLaunchPaymentsData : [];
+      const recurringRules = Array.isArray(recurringRulesData) ? recurringRulesData : [];
+      const todayRecurringPayments = recurringRules
+        .filter((rule: any) => rule.is_active && rule.type === 'saida' && ((rule.frequency === 'monthly' && Number(rule.day_of_month || 1) === currentDay) || (rule.frequency === 'weekly' && currentDay % 7 === 0)))
+        .map((rule: any) => ({
+          id: `recurring-${rule.id}`,
+          description: `${rule.description} (recorrência)`,
+          category_name: 'Recorrência',
+          launch_date: today,
+          amount: rule.amount,
+        }));
+
       setData({ ...dashboardData, filtered_launches: filteredLaunches.length, filtered_inflows: filteredInflows, filtered_outflows: filteredOutflows, filtered_net_flow: filteredNet });
       setDfc(dfcData);
       setForecast(forecastData);
       setAlerts(alertsData);
+      setTodayPayments([...todayLaunchPayments, ...todayRecurringPayments]);
       setLoading(false);
     });
   }, [companyId, period]);
