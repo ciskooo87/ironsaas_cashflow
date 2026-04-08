@@ -248,6 +248,9 @@ export default function DashboardPage() {
                 <div style={{ marginTop: 8 }}>Saídas recorrentes mensais: <strong>{forecast ? formatMoney(forecast.recurring_monthly_outflows) : '—'}</strong></div>
                 <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
                 <div style={{ marginTop: 12, color: '#0f172a', fontWeight: 700 }}>{projectedRunwayText}</div>
+                <div style={{ marginTop: 16 }}>
+                  <ForecastMiniChart points={forecast?.points?.slice(0, 7) ?? []} />
+                </div>
                 <div style={{ marginTop: 16, display: 'grid', gap: 6 }}>
                   {forecast?.points?.slice(0, 7).map((point: any) => (
                     <div key={point.day} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, fontSize: 14, color: '#475467', borderBottom: '1px solid #f2f4f7', paddingBottom: 6 }}>
