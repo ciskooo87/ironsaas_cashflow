@@ -26,7 +26,7 @@ async function parseResponse(res: Response) {
     } catch {
       detail = '';
     }
-    throw new Error(detail ? `api_error_${res.status}:${detail}` : `api_error_${res.status}`);
+    throw new Error(detail || `api_error_${res.status}`);
   }
   return res.json();
 }

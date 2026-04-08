@@ -11,7 +11,7 @@ from app.models.entities import Company, User, Account, Category, Launch, Recurr
 from app.schemas.auth import LoginInput, TokenOutput
 from app.schemas.company import CompanyCreate, CompanyOut
 from app.schemas.account import AccountCreate, AccountOut, AccountUpdate
-from app.schemas.category import CategoryCreate, CategoryOut
+from app.schemas.category import CategoryCreate, CategoryOut, CategoryUpdate
 from app.schemas.launch import LaunchCreate, LaunchOut, LaunchUpdate
 from app.schemas.user import UserCreate, UserOut
 from app.schemas.dashboard import DashboardOut
@@ -110,6 +110,27 @@ def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: U
 @router.get('/companies/{company_id}/categories', response_model=list[CategoryOut])
 def list_categories(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(Category).where(Category.company_id == company_id)).all())
+
+
+@router.put('/categories/{category_id}', response_model=CategoryOut)
+def update_category(category_id: int, payload: CategoryUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(Category, category_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='category_not_found')
+    for key, value in payload.model_dump().items():
+        setattr(row, key, value)
+    db.add(row); db.commit(); db.refresh(row)
+    return row
+
+
+@router.delete('/categories/{category_id}')
+def delete_category(category_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(Category, category_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='category_not_found')
+    db.delete(row)
+    db.commit()
+    return {'ok': True, 'id': category_id}
 
 
 @router.post('/recurring-rules', response_model=RecurringRuleOut)
