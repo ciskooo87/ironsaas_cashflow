@@ -4,18 +4,23 @@ import { useState } from 'react';
 import { apiPost } from '@/lib/api';
 
 type CategoryFormProps = {
+  companyId: number | null;
   onCreated?: () => void;
 };
 
-export function CategoryForm({ onCreated }: CategoryFormProps) {
+export function CategoryForm({ companyId, onCreated }: CategoryFormProps) {
   const [status, setStatus] = useState('');
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!companyId) {
+      setStatus('Faça login para criar categoria.');
+      return;
+    }
     const form = new FormData(e.currentTarget);
     try {
       await apiPost('/categories', {
-        company_id: 1,
+        company_id: companyId,
         name: form.get('name'),
         group_type: form.get('group_type'),
         direction: form.get('direction'),
@@ -42,7 +47,7 @@ export function CategoryForm({ onCreated }: CategoryFormProps) {
         <option value="entrada">Entrada</option>
         <option value="saida">Saída</option>
       </select>
-      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }}>Criar categoria</button>
+      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }} disabled={!companyId}>Criar categoria</button>
       {status ? <div style={{ color: '#475467', fontSize: 14 }}>{status}</div> : null}
     </form>
   );

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from '@/lib/api';
 
 type RecurringRuleFormProps = {
+  companyId: number | null;
   onCreated?: () => void;
 };
 
@@ -19,16 +20,21 @@ type Category = {
   direction: string;
 };
 
-export function RecurringRuleForm({ onCreated }: RecurringRuleFormProps) {
+export function RecurringRuleForm({ companyId, onCreated }: RecurringRuleFormProps) {
   const [status, setStatus] = useState('');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [ruleType, setRuleType] = useState('entrada');
 
   useEffect(() => {
-    apiGet('/companies/1/accounts').then(setAccounts).catch(() => setAccounts([]));
-    apiGet('/companies/1/categories').then(setCategories).catch(() => setCategories([]));
-  }, []);
+    if (!companyId) {
+      setAccounts([]);
+      setCategories([]);
+      return;
+    }
+    apiGet(`/companies/${companyId}/accounts`).then(setAccounts).catch(() => setAccounts([]));
+    apiGet(`/companies/${companyId}/categories`).then(setCategories).catch(() => setCategories([]));
+  }, [companyId]);
 
   const availableCategories = useMemo(
     () => categories.filter((category) => category.direction === 'ambos' || category.direction === ruleType),
@@ -37,10 +43,14 @@ export function RecurringRuleForm({ onCreated }: RecurringRuleFormProps) {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!companyId) {
+      setStatus('Faça login para criar recorrência.');
+      return;
+    }
     const form = new FormData(e.currentTarget);
     try {
       await apiPost('/recurring-rules', {
-        company_id: 1,
+        company_id: companyId,
         account_id: Number(form.get('account_id')),
         category_id: form.get('category_id') ? Number(form.get('category_id')) : null,
         description: form.get('description'),
@@ -87,7 +97,7 @@ export function RecurringRuleForm({ onCreated }: RecurringRuleFormProps) {
       </select>
       {!accounts.length ? <div style={{ color: '#B42318', fontSize: 14 }}>Crie ao menos uma conta antes de cadastrar recorrências.</div> : null}
       {!categories.length ? <div style={{ color: '#B54708', fontSize: 14 }}>Ainda não há categorias cadastradas para apoiar a classificação.</div> : null}
-      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }} disabled={!accounts.length}>Criar recorrência</button>
+      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }} disabled={!companyId || !accounts.length}>Criar recorrência</button>
       {status ? <div style={{ color: '#475467', fontSize: 14 }}>{status}</div> : null}
     </form>
   );

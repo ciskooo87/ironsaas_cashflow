@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/api";
 import { setToken } from "@/lib/auth";
+import { setStoredUser } from "@/lib/session";
 
 export function LoginForm() {
   const [email, setEmail] = useState("admin@ironsaas.local");
   const [password, setPassword] = useState("admin123");
   const [status, setStatus] = useState("");
+  const router = useRouter();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +26,19 @@ export function LoginForm() {
     }
     const data = await res.json();
     setToken(data.access_token);
-    setStatus("Login realizado. Recarregue a página.");
+
+    const meRes = await fetch(`${API_BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${data.access_token}` },
+    });
+
+    if (meRes.ok) {
+      const me = await meRes.json();
+      setStoredUser(me);
+    }
+
+    setStatus("Login realizado. Redirecionando...");
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE, apiGet } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useSessionUser } from '@/lib/session';
 
 type Account = {
   id: number;
@@ -22,12 +23,18 @@ export function LaunchForm() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [launchType, setLaunchType] = useState("entrada");
+  const { companyId } = useSessionUser();
   const router = useRouter();
 
   useEffect(() => {
-    apiGet('/companies/1/accounts').then(setAccounts).catch(() => setAccounts([]));
-    apiGet('/companies/1/categories').then(setCategories).catch(() => setCategories([]));
-  }, []);
+    if (!companyId) {
+      setAccounts([]);
+      setCategories([]);
+      return;
+    }
+    apiGet(`/companies/${companyId}/accounts`).then(setAccounts).catch(() => setAccounts([]));
+    apiGet(`/companies/${companyId}/categories`).then(setCategories).catch(() => setCategories([]));
+  }, [companyId]);
 
   const availableCategories = useMemo(
     () => categories.filter((category) => category.direction === 'ambos' || category.direction === launchType),
@@ -41,8 +48,12 @@ export function LaunchForm() {
       setStatus("Faça login primeiro.");
       return;
     }
+    if (!companyId) {
+      setStatus("Empresa da sessão não encontrada.");
+      return;
+    }
     const form = new FormData(e.currentTarget);
-    form.set("company_id", "1");
+    form.set("company_id", String(companyId));
     const res = await fetch(`${API_BASE}/launches/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -87,7 +98,7 @@ export function LaunchForm() {
       <textarea name="notes" placeholder="Observações" style={{ minHeight: 120, padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
       {!accounts.length ? <div style={{ color: '#B42318', fontSize: 14 }}>Crie ao menos uma conta antes de registrar lançamentos.</div> : null}
       {!categories.length ? <div style={{ color: '#B54708', fontSize: 14 }}>Sem categorias cadastradas: a classificação automática seguirá como fallback.</div> : null}
-      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700, width: 220 }} disabled={!accounts.length}>Salvar lançamento</button>
+      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700, width: 220 }} disabled={!companyId || !accounts.length}>Salvar lançamento</button>
       {status ? <div style={{ color: '#475467', fontSize: 14 }}>{status}</div> : null}
     </form>
   );
