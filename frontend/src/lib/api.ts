@@ -1,14 +1,20 @@
 "use client";
 
 import { clearToken, getToken } from '@/lib/auth';
-import { clearStoredUser } from '@/lib/session';
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/cashflow-api';
+const USER_KEY = 'ironsaas_cashflow_user';
+
+function clearLocalSession() {
+  clearToken();
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(USER_KEY);
+  }
+}
 
 async function parseResponse(res: Response) {
   if (res.status === 401) {
-    clearToken();
-    clearStoredUser();
+    clearLocalSession();
     throw new Error('session_expired');
   }
 
