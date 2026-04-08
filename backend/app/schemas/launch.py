@@ -1,0 +1,27 @@
+from datetime import date
+from decimal import Decimal
+from pydantic import BaseModel
+
+
+class LaunchCreate(BaseModel):
+    company_id: int
+    account_id: int
+    category_id: int | None = None
+    launch_date: date
+    description: str
+    amount: Decimal
+    type: str
+    subcategory: str | None = None
+    counterparty: str | None = None
+    notes: str | None = None
+    attachment_url: str | None = None
+
+
+class LaunchOut(LaunchCreate):
+    id: int
+    source: str
+    status: str
+    classification_status: str
+
+    class Config:
+        from_attributes = True
