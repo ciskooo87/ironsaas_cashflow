@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api';
 import { CategoryForm } from '@/components/CategoryForm';
 
 export default function CategoriasPage() {
   const [categories, setCategories] = useState<any[]>([]);
 
-  useEffect(() => {
+  const loadCategories = useCallback(() => {
     apiGet('/companies/1/categories').then(setCategories).catch(() => setCategories([]));
   }, []);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
@@ -34,7 +38,7 @@ export default function CategoriasPage() {
             ))}
           </tbody>
         </table>
-        <CategoryForm />
+        <CategoryForm onCreated={loadCategories} />
       </div>
     </main>
   );

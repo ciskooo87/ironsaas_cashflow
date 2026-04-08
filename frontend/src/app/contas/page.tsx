@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api';
 import { AccountForm } from '@/components/AccountForm';
 
 export default function ContasPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
 
-  useEffect(() => {
+  const loadAccounts = useCallback(() => {
     apiGet('/companies/1/accounts').then(setAccounts).catch(() => setAccounts([]));
   }, []);
+
+  useEffect(() => {
+    loadAccounts();
+  }, [loadAccounts]);
 
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
@@ -25,7 +29,7 @@ export default function ContasPage() {
             </div>
           ))}
         </div>
-        <AccountForm />
+        <AccountForm onCreated={loadAccounts} />
       </div>
     </main>
   );

@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api';
 import { RecurringRuleForm } from '@/components/RecurringRuleForm';
 
 export default function RecorrenciasPage() {
   const [rules, setRules] = useState<any[]>([]);
 
-  useEffect(() => {
+  const loadRules = useCallback(() => {
     apiGet('/companies/1/recurring-rules').then(setRules).catch(() => setRules([]));
   }, []);
+
+  useEffect(() => {
+    loadRules();
+  }, [loadRules]);
 
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
@@ -25,7 +29,7 @@ export default function RecorrenciasPage() {
             </div>
           ))}
         </div>
-        <RecurringRuleForm />
+        <RecurringRuleForm onCreated={loadRules} />
       </div>
     </main>
   );

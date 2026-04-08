@@ -1,10 +1,39 @@
 "use client";
 
-import { useState } from 'react';
-import { apiPost } from '@/lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import { apiGet, apiPost } from '@/lib/api';
 
-export function RecurringRuleForm() {
+type RecurringRuleFormProps = {
+  onCreated?: () => void;
+};
+
+type Account = {
+  id: number;
+  name: string;
+  type: string;
+};
+
+type Category = {
+  id: number;
+  name: string;
+  direction: string;
+};
+
+export function RecurringRuleForm({ onCreated }: RecurringRuleFormProps) {
   const [status, setStatus] = useState('');
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [ruleType, setRuleType] = useState('entrada');
+
+  useEffect(() => {
+    apiGet('/companies/1/accounts').then(setAccounts).catch(() => setAccounts([]));
+    apiGet('/companies/1/categories').then(setCategories).catch(() => setCategories([]));
+  }, []);
+
+  const availableCategories = useMemo(
+    () => categories.filter((category) => category.direction === 'ambos' || category.direction === ruleType),
+    [categories, ruleType],
+  );
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,8 +50,10 @@ export function RecurringRuleForm() {
         day_of_month: form.get('day_of_month') ? Number(form.get('day_of_month')) : null,
         is_active: true,
       });
-      setStatus('Regra recorrente criada. Recarregue a página.');
+      setStatus('Regra recorrente criada com sucesso.');
       e.currentTarget.reset();
+      setRuleType('entrada');
+      onCreated?.();
     } catch {
       setStatus('Falha ao criar regra recorrente.');
     }
@@ -33,7 +64,7 @@ export function RecurringRuleForm() {
       <h2 style={{ margin: 0 }}>Nova recorrência</h2>
       <input name="description" placeholder="Descrição" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
       <input name="amount" type="number" step="0.01" placeholder="Valor" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <select name="type" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
+      <select name="type" value={ruleType} onChange={(e) => setRuleType(e.target.value)} style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }}>
         <option value="entrada">Entrada</option>
         <option value="saida">Saída</option>
       </select>
@@ -42,9 +73,21 @@ export function RecurringRuleForm() {
         <option value="weekly">Semanal</option>
       </select>
       <input name="day_of_month" type="number" placeholder="Dia do mês" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <input name="account_id" placeholder="ID da conta" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <input name="category_id" placeholder="ID da categoria (opcional)" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} />
-      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }}>Criar recorrência</button>
+      <select name="account_id" required style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} defaultValue="">
+        <option value="" disabled>Selecione a conta</option>
+        {accounts.map((account) => (
+          <option key={account.id} value={account.id}>{account.name} · {account.type}</option>
+        ))}
+      </select>
+      <select name="category_id" style={{ padding: 12, borderRadius: 12, border: '1px solid #d0d5dd' }} defaultValue="">
+        <option value="">Sem categoria</option>
+        {availableCategories.map((category) => (
+          <option key={category.id} value={category.id}>{category.name}</option>
+        ))}
+      </select>
+      {!accounts.length ? <div style={{ color: '#B42318', fontSize: 14 }}>Crie ao menos uma conta antes de cadastrar recorrências.</div> : null}
+      {!categories.length ? <div style={{ color: '#B54708', fontSize: 14 }}>Ainda não há categorias cadastradas para apoiar a classificação.</div> : null}
+      <button type="submit" style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 12, padding: '14px 18px', fontWeight: 700 }} disabled={!accounts.length}>Criar recorrência</button>
       {status ? <div style={{ color: '#475467', fontSize: 14 }}>{status}</div> : null}
     </form>
   );

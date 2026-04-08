@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { apiPost } from '@/lib/api';
 
-export function CategoryForm() {
+type CategoryFormProps = {
+  onCreated?: () => void;
+};
+
+export function CategoryForm({ onCreated }: CategoryFormProps) {
   const [status, setStatus] = useState('');
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -16,8 +20,9 @@ export function CategoryForm() {
         group_type: form.get('group_type'),
         direction: form.get('direction'),
       });
-      setStatus('Categoria criada. Recarregue a página.');
+      setStatus('Categoria criada com sucesso.');
       e.currentTarget.reset();
+      onCreated?.();
     } catch {
       setStatus('Falha ao criar categoria.');
     }

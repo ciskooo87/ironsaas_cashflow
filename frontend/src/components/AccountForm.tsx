@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { apiPost } from '@/lib/api';
 
-export function AccountForm() {
+type AccountFormProps = {
+  onCreated?: () => void;
+};
+
+export function AccountForm({ onCreated }: AccountFormProps) {
   const [status, setStatus] = useState('');
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -17,8 +21,9 @@ export function AccountForm() {
         bank_name: form.get('bank_name') || null,
         initial_balance: Number(form.get('initial_balance') || 0),
       });
-      setStatus('Conta criada. Recarregue a página.');
+      setStatus('Conta criada com sucesso.');
       e.currentTarget.reset();
+      onCreated?.();
     } catch {
       setStatus('Falha ao criar conta.');
     }
