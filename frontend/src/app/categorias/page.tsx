@@ -1,11 +1,17 @@
-const categories = [
-  { name: 'Recebimentos', group: 'Operacional', direction: 'Entrada' },
-  { name: 'Fornecedores', group: 'Operacional', direction: 'Saída' },
-  { name: 'Capex', group: 'Investimento', direction: 'Saída' },
-  { name: 'Empréstimos', group: 'Financiamento', direction: 'Entrada' },
-];
+import { API_BASE } from '@/lib/api';
 
-export default function CategoriasPage() {
+async function getCategories() {
+  try {
+    const res = await fetch(`${API_BASE}/companies/1/categories`, { cache: 'no-store', headers: { Authorization: 'Bearer demo' } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export default async function CategoriasPage() {
+  const categories = await getCategories();
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
       <h1>Categorias</h1>
@@ -19,10 +25,10 @@ export default function CategoriasPage() {
           </tr>
         </thead>
         <tbody>
-          {categories.map((category) => (
-            <tr key={category.name}>
+          {categories.map((category: any) => (
+            <tr key={category.id}>
               <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{category.name}</td>
-              <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{category.group}</td>
+              <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{category.group_type}</td>
               <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{category.direction}</td>
             </tr>
           ))}
