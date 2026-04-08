@@ -233,6 +233,13 @@ export default function DashboardPage() {
                   <div><strong>Investimento líquido</strong><div>{dfc ? formatMoney(dfc.investment_inflows - dfc.investment_outflows) : '—'}</div></div>
                   <div><strong>Financiamento líquido</strong><div>{dfc ? formatMoney(dfc.financing_inflows - dfc.financing_outflows) : '—'}</div></div>
                 </div>
+                <div style={{ marginTop: 18 }}>
+                  <SimpleBarChart items={[
+                    { label: 'Operacional', value: dfc ? Number(dfc.operational_inflows) - Number(dfc.operational_outflows) : 0 },
+                    { label: 'Investimento', value: dfc ? Number(dfc.investment_inflows) - Number(dfc.investment_outflows) : 0 },
+                    { label: 'Financiamento', value: dfc ? Number(dfc.financing_inflows) - Number(dfc.financing_outflows) : 0 },
+                  ]} positiveColor="#155EEF" negativeColor="#F04438" />
+                </div>
                 <div style={{ marginTop: 16, fontWeight: 700 }}>Geração líquida de caixa: {dfc ? formatMoney(dfc.net_cash_generation) : '—'}</div>
               </div>
             </div>
