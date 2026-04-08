@@ -30,6 +30,8 @@ class User(TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(32), default="operacional")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    updated_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     company: Mapped[Company] = relationship(back_populates="users")
 
 

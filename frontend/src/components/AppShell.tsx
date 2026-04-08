@@ -13,6 +13,7 @@ const links = [
   { href: '/contas', label: 'Contas' },
   { href: '/categorias', label: 'Categorias' },
   { href: '/recorrencias', label: 'Recorrências' },
+  { href: '/usuarios', label: 'Usuários' },
 ];
 
 export function AppShell({ title, subtitle, children, actions }: { title: string; subtitle?: string; children: ReactNode; actions?: ReactNode }) {

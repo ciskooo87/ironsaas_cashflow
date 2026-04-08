@@ -13,7 +13,7 @@ from app.schemas.company import CompanyCreate, CompanyOut
 from app.schemas.account import AccountCreate, AccountOut, AccountUpdate
 from app.schemas.category import CategoryCreate, CategoryOut, CategoryUpdate
 from app.schemas.launch import LaunchCreate, LaunchOut, LaunchUpdate
-from app.schemas.user import UserCreate, UserOut
+from app.schemas.user import UserCreate, UserOut, UserUpdate
 from app.schemas.dashboard import DashboardOut
 from app.schemas.dfc import DfcOut
 from app.schemas.forecast import ForecastOut
@@ -59,6 +59,28 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     row = User(company_id=payload.company_id, name=payload.name, email=payload.email, password_hash=hash_password(payload.password), role=payload.role)
     db.add(row); db.commit(); db.refresh(row)
     return row
+
+
+@router.get('/companies/{company_id}/users', response_model=list[UserOut])
+def list_users(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    rows = list(db.scalars(select(User).where(User.company_id == company_id).order_by(User.id.desc())).all())
+    return [serialize_user(db, row) for row in rows]
+
+
+@router.put('/users/{user_id}', response_model=UserOut)
+def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    row = db.get(User, user_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='user_not_found')
+    row.name = payload.name
+    row.email = str(payload.email)
+    row.role = payload.role
+    row.is_active = payload.is_active
+    row.updated_by_user_id = current_user.id
+    if payload.password:
+        row.password_hash = hash_password(payload.password)
+    db.add(row); db.commit(); db.refresh(row)
+    return serialize_user(db, row)
 
 
 @router.post('/companies', response_model=CompanyOut)
