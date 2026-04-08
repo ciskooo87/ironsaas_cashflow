@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
 
@@ -12,6 +12,15 @@ export default function DashboardPage() {
     apiGet('/companies/1/dashboard').then(setData).catch(() => setData(null));
     apiGet('/companies/1/dfc').then(setDfc).catch(() => setDfc(null));
   }, []);
+
+  const health = useMemo(() => {
+    if (!data || !dfc) return { label: 'Sem leitura', color: '#667085' };
+    const balance = Number(data.consolidated_balance || 0);
+    const net = Number(dfc.net_cash_generation || 0);
+    if (balance < 0 || net < 0) return { label: 'Atenção', color: '#B42318' };
+    if (balance < 5000) return { label: 'Observação', color: '#B54708' };
+    return { label: 'Saudável', color: '#027A48' };
+  }, [data, dfc]);
 
   const cards = data
     ? [
@@ -35,6 +44,7 @@ export default function DashboardPage() {
           <Link href="/categorias" style={{ textDecoration: 'none', color: '#0f172a' }}>Categorias</Link>
         </div>
       </div>
+      <div style={{ marginBottom: 16, color: health.color, fontWeight: 700 }}>Saúde do caixa: {health.label}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
         {cards.map(([title, value]) => (
           <div key={title} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>

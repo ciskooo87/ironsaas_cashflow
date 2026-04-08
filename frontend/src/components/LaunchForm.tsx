@@ -1,11 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { API_BASE } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export function LaunchForm() {
   const [status, setStatus] = useState("");
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -25,8 +27,9 @@ export function LaunchForm() {
       setStatus("Falha ao salvar lançamento.");
       return;
     }
-    setStatus("Lançamento salvo com sucesso. Recarregue a listagem.");
+    setStatus("Lançamento salvo com sucesso. Redirecionando...");
     e.currentTarget.reset();
+    setTimeout(() => router.push('/lancamentos?refresh=1'), 700);
   }
 
   return (

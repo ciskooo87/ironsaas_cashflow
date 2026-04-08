@@ -27,7 +27,7 @@ export default function LancamentosPage() {
               <div>
                 <div style={{ fontWeight: 700, fontSize: 20 }}>{launch.description}</div>
                 <div style={{ marginTop: 8, color: '#667085' }}>{launch.launch_date} · {launch.category_name ?? 'Sem categoria'}</div>
-                {launch.attachment_url ? <div style={{ marginTop: 8, color: '#667085', fontSize: 14 }}>Com comprovante anexado</div> : null}
+                {launch.attachment_url ? <a href={`${launch.attachment_url}`} target="_blank" style={{ marginTop: 8, color: '#0f172a', fontSize: 14, display: 'inline-block' }}>Abrir comprovante</a> : null}
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontWeight: 700 }}>R$ {Number(launch.amount).toLocaleString('pt-BR')}</div>
