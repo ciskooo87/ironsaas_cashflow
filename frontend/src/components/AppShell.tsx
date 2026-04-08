@@ -8,6 +8,7 @@ import { clearStoredUser, useSessionUser } from '@/lib/session';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/dfc', label: 'DFC' },
   { href: '/lancamentos', label: 'Lançamentos' },
   { href: '/contas', label: 'Contas' },
   { href: '/categorias', label: 'Categorias' },
