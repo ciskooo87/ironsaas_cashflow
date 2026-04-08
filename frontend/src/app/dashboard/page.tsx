@@ -6,6 +6,10 @@ import { apiGet } from '@/lib/api';
 import { AppShell } from '@/components/AppShell';
 import { useSessionUser } from '@/lib/session';
 
+function formatMoney(value: number | string | undefined) {
+  return `R$ ${Number(value || 0).toLocaleString('pt-BR')}`;
+}
+
 export default function DashboardPage() {
   const { companyId, loading: sessionLoading } = useSessionUser();
   const [data, setData] = useState<any | null>(null);
@@ -46,19 +50,25 @@ export default function DashboardPage() {
 
   const cards = data
     ? [
-        ['Saldo consolidado', `R$ ${Number(data.consolidated_balance).toLocaleString('pt-BR')}`],
-        ['Entradas', `R$ ${Number(data.inflows).toLocaleString('pt-BR')}`],
-        ['Saídas', `R$ ${Number(data.outflows).toLocaleString('pt-BR')}`],
-        ['Lançamentos', String(data.total_launches)],
+        ['Saldo consolidado', formatMoney(data.consolidated_balance)],
+        ['Fluxo líquido', formatMoney(data.net_flow)],
+        ['Entradas', formatMoney(data.inflows)],
+        ['Saídas', formatMoney(data.outflows)],
       ]
-    : [['Saldo consolidado', '—'], ['Entradas', '—'], ['Saídas', '—'], ['Lançamentos', '—']];
+    : [['Saldo consolidado', '—'], ['Fluxo líquido', '—'], ['Entradas', '—'], ['Saídas', '—']];
 
   const isEmpty = data && Number(data.total_accounts) === 0 && Number(data.total_launches) === 0;
+  const minProjectedBalance = forecast?.points?.length ? Math.min(...forecast.points.map((point: any) => Number(point.projected_balance || 0))) : null;
+  const projectedRunwayText = minProjectedBalance !== null && minProjectedBalance < 0
+    ? 'A projeção atravessa caixa negativo dentro da janela analisada.'
+    : minProjectedBalance !== null
+      ? `Pior saldo projetado na janela: ${formatMoney(minProjectedBalance)}.`
+      : 'Sem projeção suficiente para leitura.';
 
   return (
     <AppShell
       title="Dashboard"
-      subtitle="Camada executiva inicial do produto, agora conectada à empresa do usuário autenticado."
+      subtitle="Leitura executiva do caixa da empresa autenticada, com sinais operacionais e risco projetado."
       actions={<Link href="/lancamentos/novo" style={{ background: '#0f172a', color: '#fff', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Novo lançamento</Link>}
     >
       {sessionLoading || loading ? (
@@ -93,31 +103,68 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24 }}>
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>DFC inicial</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
-                <div><strong>Operacional líquido</strong><div>R$ {dfc ? Number(dfc.operational_inflows - dfc.operational_outflows).toLocaleString('pt-BR') : '—'}</div></div>
-                <div><strong>Investimento líquido</strong><div>R$ {dfc ? Number(dfc.investment_inflows - dfc.investment_outflows).toLocaleString('pt-BR') : '—'}</div></div>
-                <div><strong>Financiamento líquido</strong><div>R$ {dfc ? Number(dfc.financing_inflows - dfc.financing_outflows).toLocaleString('pt-BR') : '—'}</div></div>
+          <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 24 }}>
+            <div style={{ display: 'grid', gap: 24 }}>
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Leitura operacional</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
+                  <div>
+                    <strong>Lançamentos</strong>
+                    <div>{data?.total_launches ?? '—'}</div>
+                  </div>
+                  <div>
+                    <strong>Ticket médio de entrada</strong>
+                    <div>{data ? formatMoney(data.avg_ticket_inflow) : '—'}</div>
+                  </div>
+                  <div>
+                    <strong>Ticket médio de saída</strong>
+                    <div>{data ? formatMoney(data.avg_ticket_outflow) : '—'}</div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 16, color: '#475467', lineHeight: 1.7 }}>
+                  {Number(data?.net_flow || 0) >= 0
+                    ? 'O período observado ainda fecha positivo no fluxo líquido. O foco deve ser sustentar disciplina de caixa e evitar deterioração do saldo projetado.'
+                    : 'O período observado fecha com consumo líquido de caixa. Vale revisar rapidamente as saídas, a estrutura de pagamento e a velocidade de recebimento.'}
+                </div>
               </div>
-              <div style={{ marginTop: 16, fontWeight: 700 }}>Geração líquida de caixa: R$ {dfc ? Number(dfc.net_cash_generation).toLocaleString('pt-BR') : '—'}</div>
+
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>DFC</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
+                  <div><strong>Operacional líquido</strong><div>{dfc ? formatMoney(dfc.operational_inflows - dfc.operational_outflows) : '—'}</div></div>
+                  <div><strong>Investimento líquido</strong><div>{dfc ? formatMoney(dfc.investment_inflows - dfc.investment_outflows) : '—'}</div></div>
+                  <div><strong>Financiamento líquido</strong><div>{dfc ? formatMoney(dfc.financing_inflows - dfc.financing_outflows) : '—'}</div></div>
+                </div>
+                <div style={{ marginTop: 16, fontWeight: 700 }}>Geração líquida de caixa: {dfc ? formatMoney(dfc.net_cash_generation) : '—'}</div>
+              </div>
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Projeção de caixa</div>
-              <div style={{ marginTop: 12 }}>Risco de liquidez: <strong>{forecast?.liquidity_risk ?? '—'}</strong></div>
-              <div style={{ marginTop: 8 }}>Saldo atual: <strong>R$ {forecast ? Number(forecast.current_balance).toLocaleString('pt-BR') : '—'}</strong></div>
-              <div style={{ marginTop: 8 }}>Média diária de entradas: <strong>R$ {forecast ? Number(forecast.average_daily_inflows).toLocaleString('pt-BR') : '—'}</strong></div>
-              <div style={{ marginTop: 8 }}>Média diária de saídas: <strong>R$ {forecast ? Number(forecast.average_daily_outflows).toLocaleString('pt-BR') : '—'}</strong></div>
-              <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
-              <div style={{ marginTop: 16, display: 'grid', gap: 6 }}>
-                {forecast?.points?.slice(0, 7).map((point: any) => (
-                  <div key={point.day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#475467' }}>
-                    <span>Dia {point.day}</span>
-                    <strong>R$ {Number(point.projected_balance).toLocaleString('pt-BR')}</strong>
-                  </div>
-                ))}
+            <div style={{ display: 'grid', gap: 24 }}>
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Projeção de caixa</div>
+                <div style={{ marginTop: 12 }}>Risco de liquidez: <strong>{forecast?.liquidity_risk ?? '—'}</strong></div>
+                <div style={{ marginTop: 8 }}>Saldo atual: <strong>{forecast ? formatMoney(forecast.current_balance) : '—'}</strong></div>
+                <div style={{ marginTop: 8 }}>Média diária de entradas: <strong>{forecast ? formatMoney(forecast.average_daily_inflows) : '—'}</strong></div>
+                <div style={{ marginTop: 8 }}>Média diária de saídas: <strong>{forecast ? formatMoney(forecast.average_daily_outflows) : '—'}</strong></div>
+                <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
+                <div style={{ marginTop: 12, color: '#0f172a', fontWeight: 700 }}>{projectedRunwayText}</div>
+                <div style={{ marginTop: 16, display: 'grid', gap: 6 }}>
+                  {forecast?.points?.slice(0, 7).map((point: any) => (
+                    <div key={point.day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#475467' }}>
+                      <span>Dia {point.day}</span>
+                      <strong>{formatMoney(point.projected_balance)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Prioridades</div>
+                <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+                  <Link href="/lancamentos/novo" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 700 }}>Registrar nova movimentação</Link>
+                  <Link href="/recorrencias" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 700 }}>Ajustar fluxos recorrentes</Link>
+                  <Link href="/categorias" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 700 }}>Revisar classificação financeira</Link>
+                </div>
               </div>
             </div>
           </div>

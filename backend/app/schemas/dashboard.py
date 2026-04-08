@@ -9,3 +9,6 @@ class DashboardOut(BaseModel):
     consolidated_balance: Decimal
     inflows: Decimal
     outflows: Decimal
+    net_flow: Decimal
+    avg_ticket_inflow: Decimal
+    avg_ticket_outflow: Decimal
