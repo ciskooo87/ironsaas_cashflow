@@ -7,7 +7,7 @@ import { setToken } from "@/lib/auth";
 import { setStoredUser } from "@/lib/session";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("admin@ironsaas.local");
+  const [email, setEmail] = useState("admin@ironsaas.com");
   const [password, setPassword] = useState("admin123");
   const [status, setStatus] = useState("");
   const router = useRouter();

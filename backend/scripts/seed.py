@@ -14,9 +14,9 @@ def run():
             db.commit()
             db.refresh(company)
 
-        user = db.query(User).filter_by(email="admin@ironsaas.local").first()
+        user = db.query(User).filter_by(email="admin@ironsaas.com").first()
         if not user:
-            user = User(company_id=company.id, name="Admin", email="admin@ironsaas.local", password_hash=hash_password("admin123"), role="admin")
+            user = User(company_id=company.id, name="Admin", email="admin@ironsaas.com", password_hash=hash_password("admin123"), role="admin")
             db.add(user)
 
         if not db.query(Account).filter_by(company_id=company.id, name="Banco Principal").first():
@@ -36,7 +36,7 @@ def run():
                 db.add(Category(company_id=company.id, name=name, group_type=group_type, direction=direction, is_system=True))
 
         db.commit()
-        print({"company_id": company.id, "admin_email": "admin@ironsaas.local", "admin_password": "admin123"})
+        print({"company_id": company.id, "admin_email": "admin@ironsaas.com", "admin_password": "admin123"})
     finally:
         db.close()
 
