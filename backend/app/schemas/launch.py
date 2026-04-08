@@ -22,6 +22,7 @@ class LaunchOut(LaunchCreate):
     source: str
     status: str
     classification_status: str
+    category_name: str | None = None
 
     class Config:
         from_attributes = True

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+from uuid import uuid4
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
@@ -14,8 +16,11 @@ from app.schemas.user import UserCreate, UserOut
 from app.schemas.dashboard import DashboardOut
 from app.services.cashflow.balance_engine import recalculate_account_balance
 from app.services.analytics.dashboard import build_company_dashboard
+from app.services.classification.rules_engine import suggest_category
 
 router = APIRouter()
+UPLOAD_DIR = Path('storage/attachments')
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post('/auth/login', response_model=TokenOutput)
 def login(payload: LoginInput, db: Session = Depends(get_db)):
@@ -33,24 +38,14 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     exists = db.scalar(select(User).where(User.email == payload.email))
     if exists:
         raise HTTPException(status_code=409, detail='email_already_exists')
-    row = User(
-        company_id=payload.company_id,
-        name=payload.name,
-        email=payload.email,
-        password_hash=hash_password(payload.password),
-        role=payload.role,
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
+    row = User(company_id=payload.company_id, name=payload.name, email=payload.email, password_hash=hash_password(payload.password), role=payload.role)
+    db.add(row); db.commit(); db.refresh(row)
     return row
 
 @router.post('/companies', response_model=CompanyOut)
 def create_company(payload: CompanyCreate, db: Session = Depends(get_db)):
     row = Company(**payload.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
+    db.add(row); db.commit(); db.refresh(row)
     return row
 
 @router.get('/companies', response_model=list[CompanyOut])
@@ -60,9 +55,7 @@ def list_companies(db: Session = Depends(get_db), _: User = Depends(get_current_
 @router.post('/accounts', response_model=AccountOut)
 def create_account(payload: AccountCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     row = Account(**payload.model_dump(), current_balance=payload.initial_balance)
-    db.add(row)
-    db.commit()
-    db.refresh(row)
+    db.add(row); db.commit(); db.refresh(row)
     return row
 
 @router.get('/companies/{company_id}/accounts', response_model=list[AccountOut])
@@ -72,9 +65,7 @@ def list_accounts(company_id: int, db: Session = Depends(get_db), _: User = Depe
 @router.post('/categories', response_model=CategoryOut)
 def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     row = Category(**payload.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
+    db.add(row); db.commit(); db.refresh(row)
     return row
 
 @router.get('/companies/{company_id}/categories', response_model=list[CategoryOut])
@@ -83,16 +74,69 @@ def list_categories(company_id: int, db: Session = Depends(get_db), _: User = De
 
 @router.post('/launches', response_model=LaunchOut)
 def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    row = Launch(**payload.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
+    data = payload.model_dump()
+    if not data.get('category_id'):
+        categories = list(db.scalars(select(Category).where(Category.company_id == payload.company_id, Category.is_active == True)).all())
+        suggested = suggest_category(payload.description, categories)
+        if suggested:
+            data['category_id'] = suggested
+            data['classification_status'] = 'sugerido'
+    row = Launch(**data)
+    db.add(row); db.commit(); db.refresh(row)
     recalculate_account_balance(db, row.account_id)
-    return row
+    category = db.get(Category, row.category_id) if row.category_id else None
+    result = LaunchOut.model_validate(row, from_attributes=True)
+    result.category_name = category.name if category else None
+    return result
+
+@router.post('/launches/upload', response_model=LaunchOut)
+async def create_launch_with_upload(
+    company_id: int = Form(...),
+    account_id: int = Form(...),
+    launch_date: str = Form(...),
+    description: str = Form(...),
+    amount: str = Form(...),
+    type: str = Form(...),
+    category_id: int | None = Form(None),
+    subcategory: str | None = Form(None),
+    counterparty: str | None = Form(None),
+    notes: str | None = Form(None),
+    file: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    attachment_url = None
+    if file and file.filename:
+        suffix = Path(file.filename).suffix or '.bin'
+        name = f"{uuid4().hex}{suffix}"
+        target = UPLOAD_DIR / name
+        target.write_bytes(await file.read())
+        attachment_url = str(target)
+    payload = LaunchCreate(
+        company_id=company_id,
+        account_id=account_id,
+        category_id=category_id,
+        launch_date=launch_date,
+        description=description,
+        amount=amount,
+        type=type,
+        subcategory=subcategory,
+        counterparty=counterparty,
+        notes=notes,
+        attachment_url=attachment_url,
+    )
+    return create_launch(payload, db, _)
 
 @router.get('/companies/{company_id}/launches', response_model=list[LaunchOut])
 def list_launches(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return list(db.scalars(select(Launch).where(Launch.company_id == company_id)).all())
+    launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id)).all())
+    category_map = {c.id: c.name for c in db.scalars(select(Category).where(Category.company_id == company_id)).all()}
+    result = []
+    for row in launches:
+        item = LaunchOut.model_validate(row, from_attributes=True)
+        item.category_name = category_map.get(row.category_id)
+        result.append(item)
+    return result
 
 @router.get('/accounts/{account_id}/balance')
 def account_balance(account_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
