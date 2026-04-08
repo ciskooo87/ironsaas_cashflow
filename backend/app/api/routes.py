@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.entities import Company, User, Account, Category, Launch
+from app.models.entities import Company, User, Account, Category, Launch, RecurringRule
 from app.schemas.auth import LoginInput, TokenOutput
 from app.schemas.company import CompanyCreate, CompanyOut
 from app.schemas.account import AccountCreate, AccountOut
@@ -17,6 +17,7 @@ from app.schemas.dashboard import DashboardOut
 from app.schemas.dfc import DfcOut
 from app.schemas.forecast import ForecastOut
 from app.schemas.alert import AlertOut
+from app.schemas.recurring import RecurringRuleCreate, RecurringRuleOut
 from app.services.cashflow.balance_engine import recalculate_account_balance
 from app.services.cashflow.dfc_engine import build_dfc
 from app.services.projections.forecast_engine import build_forecast
@@ -78,6 +79,16 @@ def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: U
 def list_categories(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(Category).where(Category.company_id == company_id)).all())
 
+@router.post('/recurring-rules', response_model=RecurringRuleOut)
+def create_recurring_rule(payload: RecurringRuleCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = RecurringRule(**payload.model_dump())
+    db.add(row); db.commit(); db.refresh(row)
+    return row
+
+@router.get('/companies/{company_id}/recurring-rules', response_model=list[RecurringRuleOut])
+def list_recurring_rules(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return list(db.scalars(select(RecurringRule).where(RecurringRule.company_id == company_id)).all())
+
 @router.post('/launches', response_model=LaunchOut)
 def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     data = payload.model_dump()
@@ -85,8 +96,8 @@ def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User 
         categories = list(db.scalars(select(Category).where(Category.company_id == payload.company_id, Category.is_active == True)).all())
         suggested = suggest_category(payload.description, categories)
         if suggested:
-            data['category_id'] = suggested
-            data['classification_status'] = 'sugerido'
+          data['category_id'] = suggested
+          data['classification_status'] = 'sugerido'
     row = Launch(**data)
     db.add(row); db.commit(); db.refresh(row)
     recalculate_account_balance(db, row.account_id)

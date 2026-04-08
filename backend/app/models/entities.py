@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import date
 from decimal import Decimal
-from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db import Base
 from app.models.common import TimestampMixin
@@ -18,6 +18,7 @@ class Company(TimestampMixin, Base):
     accounts: Mapped[list[Account]] = relationship(back_populates="company")
     categories: Mapped[list[Category]] = relationship(back_populates="company")
     launches: Mapped[list[Launch]] = relationship(back_populates="company")
+    recurring_rules: Mapped[list[RecurringRule]] = relationship(back_populates="company")
 
 
 class User(TimestampMixin, Base):
@@ -44,6 +45,7 @@ class Account(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     company: Mapped[Company] = relationship(back_populates="accounts")
     launches: Mapped[list[Launch]] = relationship(back_populates="account")
+    recurring_rules: Mapped[list[RecurringRule]] = relationship(back_populates="account")
 
 
 class Category(TimestampMixin, Base):
@@ -57,6 +59,7 @@ class Category(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     company: Mapped[Company] = relationship(back_populates="categories")
     launches: Mapped[list[Launch]] = relationship(back_populates="category")
+    recurring_rules: Mapped[list[RecurringRule]] = relationship(back_populates="category")
 
 
 class Launch(TimestampMixin, Base):
@@ -79,3 +82,20 @@ class Launch(TimestampMixin, Base):
     company: Mapped[Company] = relationship(back_populates="launches")
     account: Mapped[Account] = relationship(back_populates="launches")
     category: Mapped[Category | None] = relationship(back_populates="launches")
+
+
+class RecurringRule(TimestampMixin, Base):
+    __tablename__ = "recurring_rules"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"))
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"), nullable=True)
+    description: Mapped[str] = mapped_column(String(255))
+    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    type: Mapped[str] = mapped_column(String(16))
+    frequency: Mapped[str] = mapped_column(String(32), default="monthly")
+    day_of_month: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    company: Mapped[Company] = relationship(back_populates="recurring_rules")
+    account: Mapped[Account] = relationship(back_populates="recurring_rules")
+    category: Mapped[Category | None] = relationship(back_populates="recurring_rules")
