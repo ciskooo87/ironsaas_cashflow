@@ -5,7 +5,7 @@ from app.models.entities import Launch, Category
 
 
 def build_dfc(db: Session, company_id: int):
-    launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id)).all())
+    launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id, Launch.status != 'cancelado')).all())
     category_map = {c.id: c.group_type for c in db.scalars(select(Category).where(Category.company_id == company_id)).all()}
     data = {
         'operational_inflows': Decimal('0'),

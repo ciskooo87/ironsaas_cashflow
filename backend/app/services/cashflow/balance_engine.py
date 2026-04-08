@@ -8,7 +8,7 @@ def recalculate_account_balance(db: Session, account_id: int) -> Decimal:
     account = db.get(Account, account_id)
     if not account:
         raise ValueError("account_not_found")
-    launches = db.scalars(select(Launch).where(Launch.account_id == account_id)).all()
+    launches = db.scalars(select(Launch).where(Launch.account_id == account_id, Launch.status != 'cancelado')).all()
     balance = Decimal(account.initial_balance or 0)
     for launch in launches:
         if launch.type == "entrada":

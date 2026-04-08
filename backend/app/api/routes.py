@@ -11,7 +11,7 @@ from app.schemas.auth import LoginInput, TokenOutput
 from app.schemas.company import CompanyCreate, CompanyOut
 from app.schemas.account import AccountCreate, AccountOut
 from app.schemas.category import CategoryCreate, CategoryOut
-from app.schemas.launch import LaunchCreate, LaunchOut
+from app.schemas.launch import LaunchCreate, LaunchOut, LaunchUpdate
 from app.schemas.user import UserCreate, UserOut
 from app.schemas.dashboard import DashboardOut
 from app.schemas.dfc import DfcOut
@@ -29,6 +29,14 @@ router = APIRouter()
 UPLOAD_DIR = Path('storage/attachments')
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+
+def serialize_launch(db: Session, row: Launch) -> LaunchOut:
+    category = db.get(Category, row.category_id) if row.category_id else None
+    result = LaunchOut.model_validate(row, from_attributes=True)
+    result.category_name = category.name if category else None
+    return result
+
+
 @router.post('/auth/login', response_model=TokenOutput)
 def login(payload: LoginInput, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.email == payload.email))
@@ -36,9 +44,11 @@ def login(payload: LoginInput, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail='invalid_credentials')
     return TokenOutput(access_token=create_access_token(str(user.id)))
 
+
 @router.get('/auth/me', response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
 
 @router.post('/users', response_model=UserOut)
 def create_user(payload: UserCreate, db: Session = Depends(get_db)):
@@ -49,15 +59,18 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(row); db.commit(); db.refresh(row)
     return row
 
+
 @router.post('/companies', response_model=CompanyOut)
 def create_company(payload: CompanyCreate, db: Session = Depends(get_db)):
     row = Company(**payload.model_dump())
     db.add(row); db.commit(); db.refresh(row)
     return row
 
+
 @router.get('/companies', response_model=list[CompanyOut])
 def list_companies(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(Company)).all())
+
 
 @router.post('/accounts', response_model=AccountOut)
 def create_account(payload: AccountCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
@@ -65,9 +78,11 @@ def create_account(payload: AccountCreate, db: Session = Depends(get_db), _: Use
     db.add(row); db.commit(); db.refresh(row)
     return row
 
+
 @router.get('/companies/{company_id}/accounts', response_model=list[AccountOut])
 def list_accounts(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(Account).where(Account.company_id == company_id)).all())
+
 
 @router.post('/categories', response_model=CategoryOut)
 def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
@@ -75,9 +90,11 @@ def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: U
     db.add(row); db.commit(); db.refresh(row)
     return row
 
+
 @router.get('/companies/{company_id}/categories', response_model=list[CategoryOut])
 def list_categories(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(Category).where(Category.company_id == company_id)).all())
+
 
 @router.post('/recurring-rules', response_model=RecurringRuleOut)
 def create_recurring_rule(payload: RecurringRuleCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
@@ -85,9 +102,11 @@ def create_recurring_rule(payload: RecurringRuleCreate, db: Session = Depends(ge
     db.add(row); db.commit(); db.refresh(row)
     return row
 
+
 @router.get('/companies/{company_id}/recurring-rules', response_model=list[RecurringRuleOut])
 def list_recurring_rules(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return list(db.scalars(select(RecurringRule).where(RecurringRule.company_id == company_id)).all())
+
 
 @router.post('/launches', response_model=LaunchOut)
 def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
@@ -96,15 +115,13 @@ def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User 
         categories = list(db.scalars(select(Category).where(Category.company_id == payload.company_id, Category.is_active == True)).all())
         suggested = suggest_category(payload.description, categories)
         if suggested:
-          data['category_id'] = suggested
-          data['classification_status'] = 'sugerido'
+            data['category_id'] = suggested
+            data['classification_status'] = 'sugerido'
     row = Launch(**data)
     db.add(row); db.commit(); db.refresh(row)
     recalculate_account_balance(db, row.account_id)
-    category = db.get(Category, row.category_id) if row.category_id else None
-    result = LaunchOut.model_validate(row, from_attributes=True)
-    result.category_name = category.name if category else None
-    return result
+    return serialize_launch(db, row)
+
 
 @router.post('/launches/upload', response_model=LaunchOut)
 async def create_launch_with_upload(
@@ -132,33 +149,74 @@ async def create_launch_with_upload(
     payload = LaunchCreate(company_id=company_id, account_id=account_id, category_id=category_id, launch_date=launch_date, description=description, amount=amount, type=type, subcategory=subcategory, counterparty=counterparty, notes=notes, attachment_url=attachment_url)
     return create_launch(payload, db, _)
 
+
+@router.put('/launches/{launch_id}', response_model=LaunchOut)
+def update_launch(launch_id: int, payload: LaunchUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(Launch, launch_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='launch_not_found')
+
+    previous_account_id = row.account_id
+    data = payload.model_dump()
+    if not data.get('category_id'):
+        categories = list(db.scalars(select(Category).where(Category.company_id == row.company_id, Category.is_active == True)).all())
+        suggested = suggest_category(payload.description, categories)
+        row.classification_status = 'sugerido' if suggested else 'validado'
+        data['category_id'] = suggested
+    else:
+        row.classification_status = 'validado'
+
+    for key, value in data.items():
+        setattr(row, key, value)
+
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    recalculate_account_balance(db, previous_account_id)
+    if row.account_id != previous_account_id:
+        recalculate_account_balance(db, row.account_id)
+    return serialize_launch(db, row)
+
+
+@router.post('/launches/{launch_id}/cancel', response_model=LaunchOut)
+def cancel_launch(launch_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    row = db.get(Launch, launch_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='launch_not_found')
+    row.status = 'cancelado'
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    recalculate_account_balance(db, row.account_id)
+    return serialize_launch(db, row)
+
+
 @router.get('/companies/{company_id}/launches', response_model=list[LaunchOut])
 def list_launches(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id)).all())
-    category_map = {c.id: c.name for c in db.scalars(select(Category).where(Category.company_id == company_id)).all()}
-    result = []
-    for row in launches:
-        item = LaunchOut.model_validate(row, from_attributes=True)
-        item.category_name = category_map.get(row.category_id)
-        result.append(item)
-    return result
+    return [serialize_launch(db, row) for row in launches]
+
 
 @router.get('/accounts/{account_id}/balance')
 def account_balance(account_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     balance = recalculate_account_balance(db, account_id)
     return {'account_id': account_id, 'current_balance': balance}
 
+
 @router.get('/companies/{company_id}/dashboard', response_model=DashboardOut)
 def company_dashboard(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return build_company_dashboard(db, company_id)
+
 
 @router.get('/companies/{company_id}/dfc', response_model=DfcOut)
 def company_dfc(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return build_dfc(db, company_id)
 
+
 @router.get('/companies/{company_id}/forecast', response_model=ForecastOut)
 def company_forecast(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return build_forecast(db, company_id)
+
 
 @router.get('/companies/{company_id}/alerts', response_model=list[AlertOut])
 def company_alerts(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):

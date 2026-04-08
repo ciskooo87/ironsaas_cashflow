@@ -5,7 +5,7 @@ from app.models.entities import Account, Launch, RecurringRule
 
 
 def build_forecast(db: Session, company_id: int, horizon_days: int = 15):
-    launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id)).all())
+    launches = list(db.scalars(select(Launch).where(Launch.company_id == company_id, Launch.status != 'cancelado')).all())
     recurring = list(db.scalars(select(RecurringRule).where(RecurringRule.company_id == company_id, RecurringRule.is_active == True)).all())
     accounts = list(db.scalars(select(Account).where(Account.company_id == company_id)).all())
     current_balance = float(sum(Decimal(a.current_balance or 0) for a in accounts))

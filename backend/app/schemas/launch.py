@@ -17,6 +17,20 @@ class LaunchCreate(BaseModel):
     attachment_url: str | None = None
 
 
+class LaunchUpdate(BaseModel):
+    account_id: int
+    category_id: int | None = None
+    launch_date: date
+    description: str
+    amount: Decimal
+    type: str
+    subcategory: str | None = None
+    counterparty: str | None = None
+    notes: str | None = None
+    attachment_url: str | None = None
+    status: str = 'confirmado'
+
+
 class LaunchOut(LaunchCreate):
     id: int
     source: str
