@@ -60,7 +60,7 @@ export default function RecorrenciasPage() {
     <AppShell title="Recorrências" subtitle="Fluxos previsíveis para sustentar projeção, previsibilidade financeira e rotina operacional.">
       {statusMessage ? <div style={{ marginBottom: 16, background: '#fff', border: '1px solid #d0d5dd', borderRadius: 16, padding: 16, color: '#475467' }}>{statusMessage}</div> : null}
       {sessionLoading || loading ? <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, color: '#475467' }}>Carregando recorrências...</div> : !companyId ? <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24 }}>Faça login para carregar as recorrências.</div> : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24, alignItems: 'start' }}>
+        <div className="oc-grid-main" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24, alignItems: 'start' }}>
           <div style={{ display: 'grid', gap: 18 }}>
             {rules.length ? rules.map((rule: any) => {
               const isEditing = editingRuleId === rule.id;

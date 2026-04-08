@@ -190,7 +190,7 @@ export default function DashboardPage() {
     >
       <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24, display: 'grid', gap: 14, marginBottom: 20, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
         <div style={{ fontWeight: 800, fontSize: 18 }}>Recorte por período</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+        <div className="oc-filter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
           <input value={period.date_from} onChange={(e) => setPeriod({ ...period, date_from: e.target.value })} type="date" style={{ padding: 14, borderRadius: 14, border: '1px solid #d0d5dd', fontSize: 14 }} />
           <input value={period.date_to} onChange={(e) => setPeriod({ ...period, date_to: e.target.value })} type="date" style={{ padding: 14, borderRadius: 14, border: '1px solid #d0d5dd', fontSize: 14 }} />
           <button onClick={() => setPeriod({ date_from: '', date_to: '' })} style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 14, padding: '12px 16px', fontWeight: 800 }}>Limpar período</button>

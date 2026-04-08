@@ -30,9 +30,9 @@ export function AppShell({ title, subtitle, children, actions }: { title: string
 
   return (
     <main style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #f4f7fb 100%)' }}>
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '32px 24px 56px' }}>
-        <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', border: '1px solid #eaecf0', borderRadius: 28, padding: 28, boxShadow: '0 24px 60px rgba(15,23,42,0.08)', marginBottom: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'flex-start', marginBottom: 24 }}>
+      <div className="oc-page-pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '32px 24px 56px' }}>
+        <div className="oc-shell-card" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', border: '1px solid #eaecf0', borderRadius: 28, padding: 28, boxShadow: '0 24px 60px rgba(15,23,42,0.08)', marginBottom: 24 }}>
+          <div className="oc-header-top" style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ height: 56, borderRadius: 18, overflow: 'hidden', border: '1px solid #eaecf0', background: '#fff', boxShadow: '0 10px 24px rgba(15,23,42,0.08)', display: 'grid', placeItems: 'center', padding: '0 14px' }}>
@@ -43,10 +43,10 @@ export function AppShell({ title, subtitle, children, actions }: { title: string
                   <div style={{ fontSize: 15, color: '#475467', fontWeight: 700 }}>Cashflow</div>
                 </div>
               </div>
-              <h1 style={{ margin: '16px 0 0', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.04em', color: '#101828' }}>{title}</h1>
-              {subtitle ? <p style={{ color: '#475467', marginTop: 12, maxWidth: 760, fontSize: 16, lineHeight: 1.7 }}>{subtitle}</p> : null}
+              <h1 className="oc-title" style={{ margin: '16px 0 0', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.04em', color: '#101828' }}>{title}</h1>
+              {subtitle ? <p className="oc-subtitle" style={{ color: '#475467', marginTop: 12, maxWidth: 760, fontSize: 16, lineHeight: 1.7 }}>{subtitle}</p> : null}
             </div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <div className="oc-actions" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               {user ? (
                 <div style={{ textAlign: 'right', background: '#f8fafc', border: '1px solid #eaecf0', borderRadius: 18, padding: '12px 14px' }}>
                   <div style={{ fontWeight: 800, color: '#101828' }}>{user.name}</div>
@@ -62,7 +62,7 @@ export function AppShell({ title, subtitle, children, actions }: { title: string
             </div>
           </div>
 
-          <nav style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <nav className="oc-nav" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {links.map((link) => {
               const active = pathname === link.href;
               return (

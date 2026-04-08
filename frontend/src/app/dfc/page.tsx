@@ -14,7 +14,7 @@ function DfcBlock({ title, inflows, outflows, linesIn, linesOut }: any) {
   const tone = net >= 0 ? { bg: '#ecfdf3', color: '#027A48' } : { bg: '#fef3f2', color: '#B42318' };
   return (
     <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start' }}>
+      <div className="oc-row-between" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start' }}>
         <div>
           <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800, letterSpacing: '0.08em' }}>{title}</div>
           <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
@@ -25,7 +25,7 @@ function DfcBlock({ title, inflows, outflows, linesIn, linesOut }: any) {
         </div>
         <div style={{ background: tone.bg, color: tone.color, borderRadius: 14, padding: '10px 12px', fontWeight: 800 }}>{formatMoney(net)}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 22 }}>
+      <div className="oc-grid-split" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 22 }}>
         <div style={{ background: '#f8fafc', border: '1px solid #eaecf0', borderRadius: 18, padding: 16 }}>
           <div style={{ fontWeight: 800, marginBottom: 10 }}>Composição de entradas</div>
           <div style={{ display: 'grid', gap: 8 }}>

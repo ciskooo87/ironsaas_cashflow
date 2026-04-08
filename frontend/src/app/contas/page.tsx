@@ -33,7 +33,7 @@ export default function ContasPage() {
       ) : !companyId ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 22, padding: 24 }}>Faça login para carregar as contas.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24, alignItems: 'start' }}>
+        <div className="oc-grid-main" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24, alignItems: 'start' }}>
           <div style={{ display: 'grid', gap: 18 }}>
             {accounts.length ? accounts.map((account: any) => (
               <div key={account.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 24, boxShadow: '0 16px 40px rgba(15,23,42,0.05)' }}>

@@ -120,7 +120,7 @@ export default function LancamentosPage() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20 }}>
+                  <div className="oc-row-between" style={{ display: 'flex', justifyContent: 'space-between', gap: 20 }}>
                     <div>
                       <div style={{ fontWeight: 800, fontSize: 24 }}>{launch.description}</div>
                       <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -132,7 +132,7 @@ export default function LancamentosPage() {
                       <div style={{ marginTop: 6, color: '#98A2B3', fontSize: 12 }}>Criado: {launch.created_by_name ?? '—'} · Alterado: {launch.updated_by_name ?? '—'}</div>
                       {launch.attachment_url ? <a href={`${launch.attachment_url}`} target="_blank" style={{ marginTop: 10, color: '#0f172a', fontSize: 14, display: 'inline-block', fontWeight: 700 }}>Abrir comprovante</a> : null}
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div className="oc-right-col" style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: 800, fontSize: 24 }}>R$ {Number(launch.amount).toLocaleString('pt-BR')}</div>
                       <div style={{ marginTop: 8, color: '#667085', fontSize: 14 }}>{launch.classification_status}</div>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14, flexWrap: 'wrap' }}>
