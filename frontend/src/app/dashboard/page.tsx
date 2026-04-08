@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [dfc, setDfc] = useState<any | null>(null);
   const [forecast, setForecast] = useState<any | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [todayPayments, setTodayPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState({ date_from: '', date_to: '' });
@@ -206,16 +207,35 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ marginTop: 24, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-            <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Alertas</div>
-            <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
-              {alerts.length ? alerts.map((alert, idx) => (
-                <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#f8fafc' }}>
-                  <div style={{ fontWeight: 700 }}>{alert.title}</div>
-                  <div style={{ marginTop: 8, color: '#475467' }}>{alert.description}</div>
-                  <div style={{ marginTop: 8, color: '#0f172a' }}>{alert.recommendation}</div>
-                </div>
-              )) : <div style={{ color: '#667085' }}>Nenhum alerta relevante no momento.</div>}
+          <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Pagamentos do dia corrente</div>
+              <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+                {todayPayments.length ? todayPayments.map((payment: any) => (
+                  <div key={payment.id} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#f8fafc' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{payment.description}</div>
+                        <div style={{ marginTop: 6, color: '#475467', fontSize: 14 }}>{payment.category_name ?? 'Sem categoria'} · {payment.launch_date}</div>
+                      </div>
+                      <div style={{ fontWeight: 700 }}>{formatMoney(payment.amount)}</div>
+                    </div>
+                  </div>
+                )) : <div style={{ color: '#667085' }}>Nenhum pagamento confirmado para hoje.</div>}
+              </div>
+            </div>
+
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Alertas</div>
+              <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+                {alerts.length ? alerts.map((alert, idx) => (
+                  <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#f8fafc' }}>
+                    <div style={{ fontWeight: 700 }}>{alert.title}</div>
+                    <div style={{ marginTop: 8, color: '#475467' }}>{alert.description}</div>
+                    <div style={{ marginTop: 8, color: '#0f172a' }}>{alert.recommendation}</div>
+                  </div>
+                )) : <div style={{ color: '#667085' }}>Nenhum alerta relevante no momento.</div>}
+              </div>
             </div>
           </div>
         </>
