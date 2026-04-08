@@ -4,6 +4,8 @@ from pydantic import BaseModel
 class ForecastPoint(BaseModel):
     day: int
     projected_balance: float
+    recurring_inflows: float = 0
+    recurring_outflows: float = 0
 
 
 class ForecastOut(BaseModel):
@@ -14,3 +16,5 @@ class ForecastOut(BaseModel):
     points: list[ForecastPoint]
     liquidity_risk: str
     recommendation: str
+    recurring_monthly_inflows: float = 0
+    recurring_monthly_outflows: float = 0

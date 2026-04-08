@@ -21,16 +21,21 @@ def build_forecast(db: Session, company_id: int, horizon_days: int = 15):
         average_daily_inflows = 0.0
         average_daily_outflows = 0.0
 
-    recurring_in = sum(float(r.amount) for r in recurring if r.type == 'entrada') / 30 if recurring else 0.0
-    recurring_out = sum(float(r.amount) for r in recurring if r.type == 'saida') / 30 if recurring else 0.0
-    projected_in = average_daily_inflows + recurring_in
-    projected_out = average_daily_outflows + recurring_out
+    recurring_monthly_inflows = sum(float(r.amount) for r in recurring if r.type == 'entrada') if recurring else 0.0
+    recurring_monthly_outflows = sum(float(r.amount) for r in recurring if r.type == 'saida') if recurring else 0.0
 
     points = []
     running = current_balance
     for day in range(1, horizon_days + 1):
-        running = running + projected_in - projected_out
-        points.append({'day': day, 'projected_balance': round(running, 2)})
+        recurring_inflows = sum(float(r.amount) for r in recurring if r.type == 'entrada' and ((r.frequency == 'monthly' and (r.day_of_month or 1) == day) or (r.frequency == 'weekly' and day % 7 == 0)))
+        recurring_outflows = sum(float(r.amount) for r in recurring if r.type == 'saida' and ((r.frequency == 'monthly' and (r.day_of_month or 1) == day) or (r.frequency == 'weekly' and day % 7 == 0)))
+        running = running + average_daily_inflows - average_daily_outflows + recurring_inflows - recurring_outflows
+        points.append({
+            'day': day,
+            'projected_balance': round(running, 2),
+            'recurring_inflows': round(recurring_inflows, 2),
+            'recurring_outflows': round(recurring_outflows, 2),
+        })
 
     liquidity_risk = 'baixo'
     recommendation = 'Manter acompanhamento da geração operacional e do saldo consolidado.'
@@ -43,10 +48,12 @@ def build_forecast(db: Session, company_id: int, horizon_days: int = 15):
 
     return {
         'current_balance': round(current_balance, 2),
-        'average_daily_inflows': round(projected_in, 2),
-        'average_daily_outflows': round(projected_out, 2),
+        'average_daily_inflows': round(average_daily_inflows, 2),
+        'average_daily_outflows': round(average_daily_outflows, 2),
         'horizon_days': horizon_days,
         'points': points,
         'liquidity_risk': liquidity_risk,
         'recommendation': recommendation,
+        'recurring_monthly_inflows': round(recurring_monthly_inflows, 2),
+        'recurring_monthly_outflows': round(recurring_monthly_outflows, 2),
     }

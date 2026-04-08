@@ -178,12 +178,17 @@ export default function DashboardPage() {
                 <div style={{ marginTop: 8 }}>Saldo atual: <strong>{forecast ? formatMoney(forecast.current_balance) : '—'}</strong></div>
                 <div style={{ marginTop: 8 }}>Média diária de entradas: <strong>{forecast ? formatMoney(forecast.average_daily_inflows) : '—'}</strong></div>
                 <div style={{ marginTop: 8 }}>Média diária de saídas: <strong>{forecast ? formatMoney(forecast.average_daily_outflows) : '—'}</strong></div>
+                <div style={{ marginTop: 8 }}>Entradas recorrentes mensais: <strong>{forecast ? formatMoney(forecast.recurring_monthly_inflows) : '—'}</strong></div>
+                <div style={{ marginTop: 8 }}>Saídas recorrentes mensais: <strong>{forecast ? formatMoney(forecast.recurring_monthly_outflows) : '—'}</strong></div>
                 <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
                 <div style={{ marginTop: 12, color: '#0f172a', fontWeight: 700 }}>{projectedRunwayText}</div>
                 <div style={{ marginTop: 16, display: 'grid', gap: 6 }}>
                   {forecast?.points?.slice(0, 7).map((point: any) => (
-                    <div key={point.day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#475467' }}>
-                      <span>Dia {point.day}</span>
+                    <div key={point.day} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, fontSize: 14, color: '#475467', borderBottom: '1px solid #f2f4f7', paddingBottom: 6 }}>
+                      <div>
+                        <span>Dia {point.day}</span>
+                        {(point.recurring_inflows || point.recurring_outflows) ? <div style={{ fontSize: 12, color: '#667085' }}>Recorrências: +{formatMoney(point.recurring_inflows)} / -{formatMoney(point.recurring_outflows)}</div> : null}
+                      </div>
                       <strong>{formatMoney(point.projected_balance)}</strong>
                     </div>
                   ))}
