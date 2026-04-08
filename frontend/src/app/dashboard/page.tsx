@@ -223,7 +223,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
               <Link href="/contas" style={{ background: '#0f172a', color: '#fff', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Criar conta</Link>
               <Link href="/categorias" style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Criar categoria</Link>
-              <Link href="/lancamentos/novo" style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Registrar lançamento</Link>
+              <Link prefetch={false} href="/lancamentos/novo" style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 12, padding: '12px 16px', fontWeight: 700, textDecoration: 'none' }}>Registrar lançamento</Link>
             </div>
           </div>
         </div>

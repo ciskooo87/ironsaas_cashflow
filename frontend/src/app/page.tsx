@@ -37,7 +37,7 @@ export default function Home() {
                 </p>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
                   <Link href="/dashboard" style={{ background: 'linear-gradient(135deg, #111827 0%, #1d2939 100%)', color: '#fff', borderRadius: 14, padding: '13px 16px', fontWeight: 800, textDecoration: 'none', boxShadow: '0 12px 24px rgba(17,24,39,0.18)' }}>Ir para dashboard</Link>
-                  <Link href="/lancamentos/novo" style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 14, padding: '13px 16px', fontWeight: 800, textDecoration: 'none' }}>Registrar lançamento</Link>
+                  <Link prefetch={false} href="/lancamentos/novo" style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 14, padding: '13px 16px', fontWeight: 800, textDecoration: 'none' }}>Registrar lançamento</Link>
                 </div>
               </>
             ) : (

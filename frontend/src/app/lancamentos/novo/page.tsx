@@ -1,3 +1,5 @@
+"use client";
+
 import { LaunchForm } from '@/components/LaunchForm';
 import { AppShell } from '@/components/AppShell';
 

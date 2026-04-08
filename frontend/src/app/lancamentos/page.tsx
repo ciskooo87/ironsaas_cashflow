@@ -69,7 +69,7 @@ export default function LancamentosPage() {
   }
 
   return (
-    <AppShell title="Lançamentos" subtitle="Fluxo operacional refinado para acompanhar entradas e saídas com filtros, edição e baixa lógica." actions={<Link href="/lancamentos/novo" style={{ background: 'linear-gradient(135deg, #111827 0%, #1d2939 100%)', color: '#fff', borderRadius: 14, padding: '12px 16px', fontWeight: 800, textDecoration: 'none', boxShadow: '0 12px 24px rgba(17,24,39,0.18)' }}>Novo lançamento</Link>}>
+    <AppShell title="Lançamentos" subtitle="Fluxo operacional refinado para acompanhar entradas e saídas com filtros, edição e baixa lógica." actions={<Link prefetch={false} href="/lancamentos/novo" style={{ background: 'linear-gradient(135deg, #111827 0%, #1d2939 100%)', color: '#fff', borderRadius: 14, padding: '12px 16px', fontWeight: 800, textDecoration: 'none', boxShadow: '0 12px 24px rgba(17,24,39,0.18)' }}>Novo lançamento</Link>}>
       {statusMessage ? <div style={{ marginBottom: 16, background: '#fff', border: '1px solid #d0d5dd', borderRadius: 16, padding: 16, color: '#475467' }}>{statusMessage}</div> : null}
 
       <div style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
