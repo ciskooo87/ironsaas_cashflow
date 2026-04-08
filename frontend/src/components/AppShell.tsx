@@ -35,8 +35,8 @@ export function AppShell({ title, subtitle, children, actions }: { title: string
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 16, overflow: 'hidden', border: '1px solid #eaecf0', background: '#fff', boxShadow: '0 10px 24px rgba(15,23,42,0.08)', display: 'grid', placeItems: 'center' }}>
-                  <img src="/cashflow/brand/ironcore-symbol.png" alt="Ironcore" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+                <div style={{ height: 56, borderRadius: 18, overflow: 'hidden', border: '1px solid #eaecf0', background: '#fff', boxShadow: '0 10px 24px rgba(15,23,42,0.08)', display: 'grid', placeItems: 'center', padding: '0 14px' }}>
+                  <img src="/cashflow/brand/ironcore-logo-v2.jpg" alt="Ironcore" style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
                 </div>
                 <div>
                   <div style={{ fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#98A2B3', fontWeight: 800 }}>Ironcore</div>
