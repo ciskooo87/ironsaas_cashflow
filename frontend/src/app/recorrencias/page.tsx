@@ -88,6 +88,7 @@ export default function RecorrenciasPage() {
                         <span style={{ background: rule.type === 'entrada' ? '#ecfdf3' : '#fef3f2', color: rule.type === 'entrada' ? '#027A48' : '#B42318', borderRadius: 999, padding: '6px 10px', fontSize: 12, fontWeight: 800 }}>{rule.type}</span>
                       </div>
                       <div style={{ marginTop: 16, fontWeight: 800, fontSize: 22 }}>R$ {Number(rule.amount).toLocaleString('pt-BR')}</div>
+                      <div style={{ marginTop: 6, color: '#98A2B3', fontSize: 12 }}>Criado: {rule.created_by_name ?? '—'} · Alterado: {rule.updated_by_name ?? '—'}</div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                         <button onClick={() => startEdit(rule)} style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 14, padding: '12px 14px', fontWeight: 800 }}>Editar</button>
                         <button onClick={() => deleteRule(rule.id)} style={{ background: '#fff1f3', color: '#b42318', border: '1px solid #fecdca', borderRadius: 14, padding: '12px 14px', fontWeight: 800 }}>Apagar</button>

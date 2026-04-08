@@ -71,7 +71,10 @@ export default function CategoriasPage() {
                   <tr key={category.id}>
                     <td style={{ padding: 14, borderBottom: '1px solid #f2f4f7', fontWeight: 700 }}>{category.name}</td>
                     <td style={{ padding: 14, borderBottom: '1px solid #f2f4f7', color: '#475467' }}>{category.group_type}</td>
-                    <td style={{ padding: 14, borderBottom: '1px solid #f2f4f7', color: '#475467' }}>{category.direction}</td>
+                    <td style={{ padding: 14, borderBottom: '1px solid #f2f4f7', color: '#475467' }}>
+                      <div>{category.direction}</div>
+                      <div style={{ marginTop: 6, fontSize: 12, color: '#98A2B3' }}>Criado: {category.created_by_name ?? '—'} · Alterado: {category.updated_by_name ?? '—'}</div>
+                    </td>
                     <td style={{ padding: 14, borderBottom: '1px solid #f2f4f7', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap' }}>
                         <button onClick={() => { setEditingCategory(category); setStatusMessage(''); }} style={{ background: '#fff', color: '#0f172a', border: '1px solid #d0d5dd', borderRadius: 12, padding: '10px 12px', fontWeight: 800 }}>Editar</button>

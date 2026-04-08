@@ -27,6 +27,10 @@ class RecurringRuleUpdate(BaseModel):
 
 class RecurringRuleOut(RecurringRuleCreate):
     id: int
+    created_by_user_id: int | None = None
+    updated_by_user_id: int | None = None
+    created_by_name: str | None = None
+    updated_by_name: str | None = None
 
     class Config:
         from_attributes = True

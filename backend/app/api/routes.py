@@ -33,8 +33,30 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def serialize_launch(db: Session, row: Launch) -> LaunchOut:
     category = db.get(Category, row.category_id) if row.category_id else None
+    created_by = db.get(User, row.created_by_user_id) if getattr(row, 'created_by_user_id', None) else None
+    updated_by = db.get(User, row.updated_by_user_id) if getattr(row, 'updated_by_user_id', None) else None
     result = LaunchOut.model_validate(row, from_attributes=True)
     result.category_name = category.name if category else None
+    result.created_by_name = created_by.name if created_by else None
+    result.updated_by_name = updated_by.name if updated_by else None
+    return result
+
+
+def serialize_category(db: Session, row: Category) -> CategoryOut:
+    created_by = db.get(User, row.created_by_user_id) if getattr(row, 'created_by_user_id', None) else None
+    updated_by = db.get(User, row.updated_by_user_id) if getattr(row, 'updated_by_user_id', None) else None
+    result = CategoryOut.model_validate(row, from_attributes=True)
+    result.created_by_name = created_by.name if created_by else None
+    result.updated_by_name = updated_by.name if updated_by else None
+    return result
+
+
+def serialize_recurring_rule(db: Session, row: RecurringRule) -> RecurringRuleOut:
+    created_by = db.get(User, row.created_by_user_id) if getattr(row, 'created_by_user_id', None) else None
+    updated_by = db.get(User, row.updated_by_user_id) if getattr(row, 'updated_by_user_id', None) else None
+    result = RecurringRuleOut.model_validate(row, from_attributes=True)
+    result.created_by_name = created_by.name if created_by else None
+    result.updated_by_name = updated_by.name if updated_by else None
     return result
 
 
@@ -123,26 +145,28 @@ def update_account(account_id: int, payload: AccountUpdate, db: Session = Depend
 
 
 @router.post('/categories', response_model=CategoryOut)
-def create_category(payload: CategoryCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    row = Category(**payload.model_dump())
+def create_category(payload: CategoryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    row = Category(**payload.model_dump(), created_by_user_id=current_user.id, updated_by_user_id=current_user.id)
     db.add(row); db.commit(); db.refresh(row)
-    return row
+    return serialize_category(db, row)
 
 
 @router.get('/companies/{company_id}/categories', response_model=list[CategoryOut])
 def list_categories(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return list(db.scalars(select(Category).where(Category.company_id == company_id)).all())
+    rows = list(db.scalars(select(Category).where(Category.company_id == company_id)).all())
+    return [serialize_category(db, row) for row in rows]
 
 
 @router.put('/categories/{category_id}', response_model=CategoryOut)
-def update_category(category_id: int, payload: CategoryUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def update_category(category_id: int, payload: CategoryUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     row = db.get(Category, category_id)
     if not row:
         raise HTTPException(status_code=404, detail='category_not_found')
     for key, value in payload.model_dump().items():
         setattr(row, key, value)
+    row.updated_by_user_id = current_user.id
     db.add(row); db.commit(); db.refresh(row)
-    return row
+    return serialize_category(db, row)
 
 
 @router.delete('/categories/{category_id}')
@@ -156,26 +180,28 @@ def delete_category(category_id: int, db: Session = Depends(get_db), _: User = D
 
 
 @router.post('/recurring-rules', response_model=RecurringRuleOut)
-def create_recurring_rule(payload: RecurringRuleCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    row = RecurringRule(**payload.model_dump())
+def create_recurring_rule(payload: RecurringRuleCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    row = RecurringRule(**payload.model_dump(), created_by_user_id=current_user.id, updated_by_user_id=current_user.id)
     db.add(row); db.commit(); db.refresh(row)
-    return row
+    return serialize_recurring_rule(db, row)
 
 
 @router.get('/companies/{company_id}/recurring-rules', response_model=list[RecurringRuleOut])
 def list_recurring_rules(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return list(db.scalars(select(RecurringRule).where(RecurringRule.company_id == company_id)).all())
+    rows = list(db.scalars(select(RecurringRule).where(RecurringRule.company_id == company_id)).all())
+    return [serialize_recurring_rule(db, row) for row in rows]
 
 
 @router.put('/recurring-rules/{rule_id}', response_model=RecurringRuleOut)
-def update_recurring_rule(rule_id: int, payload: RecurringRuleUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def update_recurring_rule(rule_id: int, payload: RecurringRuleUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     row = db.get(RecurringRule, rule_id)
     if not row:
         raise HTTPException(status_code=404, detail='recurring_rule_not_found')
     for key, value in payload.model_dump().items():
         setattr(row, key, value)
+    row.updated_by_user_id = current_user.id
     db.add(row); db.commit(); db.refresh(row)
-    return row
+    return serialize_recurring_rule(db, row)
 
 
 @router.delete('/recurring-rules/{rule_id}')
@@ -189,7 +215,7 @@ def delete_recurring_rule(rule_id: int, db: Session = Depends(get_db), _: User =
 
 
 @router.post('/launches', response_model=LaunchOut)
-def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     data = payload.model_dump()
     if not data.get('category_id'):
         categories = list(db.scalars(select(Category).where(Category.company_id == payload.company_id, Category.is_active == True)).all())
@@ -197,7 +223,7 @@ def create_launch(payload: LaunchCreate, db: Session = Depends(get_db), _: User 
         if suggested:
             data['category_id'] = suggested
             data['classification_status'] = 'sugerido'
-    row = Launch(**data)
+    row = Launch(**data, created_by_user_id=current_user.id, updated_by_user_id=current_user.id)
     db.add(row); db.commit(); db.refresh(row)
     recalculate_account_balance(db, row.account_id)
     return serialize_launch(db, row)
@@ -231,7 +257,7 @@ async def create_launch_with_upload(
 
 
 @router.put('/launches/{launch_id}', response_model=LaunchOut)
-def update_launch(launch_id: int, payload: LaunchUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def update_launch(launch_id: int, payload: LaunchUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     row = db.get(Launch, launch_id)
     if not row:
         raise HTTPException(status_code=404, detail='launch_not_found')
@@ -248,6 +274,7 @@ def update_launch(launch_id: int, payload: LaunchUpdate, db: Session = Depends(g
 
     for key, value in data.items():
         setattr(row, key, value)
+    row.updated_by_user_id = current_user.id
 
     db.add(row)
     db.commit()
@@ -259,11 +286,12 @@ def update_launch(launch_id: int, payload: LaunchUpdate, db: Session = Depends(g
 
 
 @router.post('/launches/{launch_id}/cancel', response_model=LaunchOut)
-def cancel_launch(launch_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def cancel_launch(launch_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     row = db.get(Launch, launch_id)
     if not row:
         raise HTTPException(status_code=404, detail='launch_not_found')
     row.status = 'cancelado'
+    row.updated_by_user_id = current_user.id
     db.add(row)
     db.commit()
     db.refresh(row)

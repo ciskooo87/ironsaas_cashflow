@@ -129,6 +129,7 @@ export default function LancamentosPage() {
                         <span style={{ background: launch.status === 'cancelado' ? '#fff7ed' : '#eff4ff', color: launch.status === 'cancelado' ? '#B54708' : '#004EEB', borderRadius: 999, padding: '6px 10px', fontSize: 12, fontWeight: 800 }}>{launch.status}</span>
                       </div>
                       <div style={{ marginTop: 10, color: '#667085', fontSize: 14 }}>{launch.launch_date}</div>
+                      <div style={{ marginTop: 6, color: '#98A2B3', fontSize: 12 }}>Criado: {launch.created_by_name ?? '—'} · Alterado: {launch.updated_by_name ?? '—'}</div>
                       {launch.attachment_url ? <a href={`${launch.attachment_url}`} target="_blank" style={{ marginTop: 10, color: '#0f172a', fontSize: 14, display: 'inline-block', fontWeight: 700 }}>Abrir comprovante</a> : null}
                     </div>
                     <div style={{ textAlign: 'right' }}>
