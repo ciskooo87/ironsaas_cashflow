@@ -46,6 +46,7 @@ export default function DashboardPage() {
           <Link href="/lancamentos" style={{ textDecoration: 'none', color: '#0f172a' }}>Lançamentos</Link>
           <Link href="/contas" style={{ textDecoration: 'none', color: '#0f172a' }}>Contas</Link>
           <Link href="/categorias" style={{ textDecoration: 'none', color: '#0f172a' }}>Categorias</Link>
+          <Link href="/recorrencias" style={{ textDecoration: 'none', color: '#0f172a' }}>Recorrências</Link>
         </div>
       </div>
       <div style={{ marginBottom: 16, color: health.color, fontWeight: 700 }}>Saúde do caixa: {health.label}</div>
@@ -76,6 +77,14 @@ export default function DashboardPage() {
           <div style={{ marginTop: 8 }}>Média diária de entradas: <strong>R$ {forecast ? Number(forecast.average_daily_inflows).toLocaleString('pt-BR') : '—'}</strong></div>
           <div style={{ marginTop: 8 }}>Média diária de saídas: <strong>R$ {forecast ? Number(forecast.average_daily_outflows).toLocaleString('pt-BR') : '—'}</strong></div>
           <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
+          <div style={{ marginTop: 16, display: 'grid', gap: 6 }}>
+            {forecast?.points?.slice(0, 7).map((point: any) => (
+              <div key={point.day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#475467' }}>
+                <span>Dia {point.day}</span>
+                <strong>R$ {Number(point.projected_balance).toLocaleString('pt-BR')}</strong>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
