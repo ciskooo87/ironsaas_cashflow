@@ -15,9 +15,13 @@ from app.schemas.launch import LaunchCreate, LaunchOut
 from app.schemas.user import UserCreate, UserOut
 from app.schemas.dashboard import DashboardOut
 from app.schemas.dfc import DfcOut
+from app.schemas.forecast import ForecastOut
+from app.schemas.alert import AlertOut
 from app.services.cashflow.balance_engine import recalculate_account_balance
 from app.services.cashflow.dfc_engine import build_dfc
+from app.services.projections.forecast_engine import build_forecast
 from app.services.analytics.dashboard import build_company_dashboard
+from app.services.analytics.alerts import build_alerts
 from app.services.classification.rules_engine import suggest_category
 
 router = APIRouter()
@@ -140,3 +144,14 @@ def company_dashboard(company_id: int, db: Session = Depends(get_db), _: User = 
 @router.get('/companies/{company_id}/dfc', response_model=DfcOut)
 def company_dfc(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return build_dfc(db, company_id)
+
+@router.get('/companies/{company_id}/forecast', response_model=ForecastOut)
+def company_forecast(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return build_forecast(db, company_id)
+
+@router.get('/companies/{company_id}/alerts', response_model=list[AlertOut])
+def company_alerts(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    dashboard = build_company_dashboard(db, company_id)
+    dfc = build_dfc(db, company_id)
+    forecast = build_forecast(db, company_id)
+    return build_alerts(float(dashboard['consolidated_balance']), float(dfc['net_cash_generation']), forecast['liquidity_risk'])

@@ -7,10 +7,14 @@ import { apiGet } from '@/lib/api';
 export default function DashboardPage() {
   const [data, setData] = useState<any | null>(null);
   const [dfc, setDfc] = useState<any | null>(null);
+  const [forecast, setForecast] = useState<any | null>(null);
+  const [alerts, setAlerts] = useState<any[]>([]);
 
   useEffect(() => {
     apiGet('/companies/1/dashboard').then(setData).catch(() => setData(null));
     apiGet('/companies/1/dfc').then(setDfc).catch(() => setDfc(null));
+    apiGet('/companies/1/forecast').then(setForecast).catch(() => setForecast(null));
+    apiGet('/companies/1/alerts').then(setAlerts).catch(() => setAlerts([]));
   }, []);
 
   const health = useMemo(() => {
@@ -53,14 +57,39 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 24, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
-        <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>DFC inicial</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
-          <div><strong>Operacional líquido</strong><div>R$ {dfc ? Number(dfc.operational_inflows - dfc.operational_outflows).toLocaleString('pt-BR') : '—'}</div></div>
-          <div><strong>Investimento líquido</strong><div>R$ {dfc ? Number(dfc.investment_inflows - dfc.investment_outflows).toLocaleString('pt-BR') : '—'}</div></div>
-          <div><strong>Financiamento líquido</strong><div>R$ {dfc ? Number(dfc.financing_inflows - dfc.financing_outflows).toLocaleString('pt-BR') : '—'}</div></div>
+
+      <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24 }}>
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+          <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>DFC inicial</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginTop: 16 }}>
+            <div><strong>Operacional líquido</strong><div>R$ {dfc ? Number(dfc.operational_inflows - dfc.operational_outflows).toLocaleString('pt-BR') : '—'}</div></div>
+            <div><strong>Investimento líquido</strong><div>R$ {dfc ? Number(dfc.investment_inflows - dfc.investment_outflows).toLocaleString('pt-BR') : '—'}</div></div>
+            <div><strong>Financiamento líquido</strong><div>R$ {dfc ? Number(dfc.financing_inflows - dfc.financing_outflows).toLocaleString('pt-BR') : '—'}</div></div>
+          </div>
+          <div style={{ marginTop: 16, fontWeight: 700 }}>Geração líquida de caixa: R$ {dfc ? Number(dfc.net_cash_generation).toLocaleString('pt-BR') : '—'}</div>
         </div>
-        <div style={{ marginTop: 16, fontWeight: 700 }}>Geração líquida de caixa: R$ {dfc ? Number(dfc.net_cash_generation).toLocaleString('pt-BR') : '—'}</div>
+
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+          <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Projeção de caixa</div>
+          <div style={{ marginTop: 12 }}>Risco de liquidez: <strong>{forecast?.liquidity_risk ?? '—'}</strong></div>
+          <div style={{ marginTop: 8 }}>Saldo atual: <strong>R$ {forecast ? Number(forecast.current_balance).toLocaleString('pt-BR') : '—'}</strong></div>
+          <div style={{ marginTop: 8 }}>Média diária de entradas: <strong>R$ {forecast ? Number(forecast.average_daily_inflows).toLocaleString('pt-BR') : '—'}</strong></div>
+          <div style={{ marginTop: 8 }}>Média diária de saídas: <strong>R$ {forecast ? Number(forecast.average_daily_outflows).toLocaleString('pt-BR') : '—'}</strong></div>
+          <div style={{ marginTop: 12, color: '#475467' }}>{forecast?.recommendation ?? '—'}</div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 20 }}>
+        <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#98A2B3', fontWeight: 700 }}>Alertas</div>
+        <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+          {alerts.length ? alerts.map((alert, idx) => (
+            <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#f8fafc' }}>
+              <div style={{ fontWeight: 700 }}>{alert.title}</div>
+              <div style={{ marginTop: 8, color: '#475467' }}>{alert.description}</div>
+              <div style={{ marginTop: 8, color: '#0f172a' }}>{alert.recommendation}</div>
+            </div>
+          )) : <div style={{ color: '#667085' }}>Nenhum alerta relevante no momento.</div>}
+        </div>
       </div>
     </main>
   );
