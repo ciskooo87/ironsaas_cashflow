@@ -14,7 +14,9 @@ from app.schemas.category import CategoryCreate, CategoryOut
 from app.schemas.launch import LaunchCreate, LaunchOut
 from app.schemas.user import UserCreate, UserOut
 from app.schemas.dashboard import DashboardOut
+from app.schemas.dfc import DfcOut
 from app.services.cashflow.balance_engine import recalculate_account_balance
+from app.services.cashflow.dfc_engine import build_dfc
 from app.services.analytics.dashboard import build_company_dashboard
 from app.services.classification.rules_engine import suggest_category
 
@@ -112,19 +114,7 @@ async def create_launch_with_upload(
         target = UPLOAD_DIR / name
         target.write_bytes(await file.read())
         attachment_url = str(target)
-    payload = LaunchCreate(
-        company_id=company_id,
-        account_id=account_id,
-        category_id=category_id,
-        launch_date=launch_date,
-        description=description,
-        amount=amount,
-        type=type,
-        subcategory=subcategory,
-        counterparty=counterparty,
-        notes=notes,
-        attachment_url=attachment_url,
-    )
+    payload = LaunchCreate(company_id=company_id, account_id=account_id, category_id=category_id, launch_date=launch_date, description=description, amount=amount, type=type, subcategory=subcategory, counterparty=counterparty, notes=notes, attachment_url=attachment_url)
     return create_launch(payload, db, _)
 
 @router.get('/companies/{company_id}/launches', response_model=list[LaunchOut])
@@ -146,3 +136,7 @@ def account_balance(account_id: int, db: Session = Depends(get_db), _: User = De
 @router.get('/companies/{company_id}/dashboard', response_model=DashboardOut)
 def company_dashboard(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return build_company_dashboard(db, company_id)
+
+@router.get('/companies/{company_id}/dfc', response_model=DfcOut)
+def company_dfc(company_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return build_dfc(db, company_id)
