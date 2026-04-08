@@ -1,17 +1,15 @@
-import { API_BASE } from '@/lib/api';
+"use client";
 
-async function getDashboard() {
-  try {
-    const res = await fetch(`${API_BASE}/companies/1/dashboard`, { cache: 'no-store', headers: { Authorization: 'Bearer demo' } });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
+import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api';
 
-export default async function DashboardPage() {
-  const data = await getDashboard();
+export default function DashboardPage() {
+  const [data, setData] = useState<any | null>(null);
+
+  useEffect(() => {
+    apiGet('/companies/1/dashboard').then(setData).catch(() => setData(null));
+  }, []);
+
   const cards = data
     ? [
         ['Saldo consolidado', `R$ ${Number(data.consolidated_balance).toLocaleString('pt-BR')}`],
