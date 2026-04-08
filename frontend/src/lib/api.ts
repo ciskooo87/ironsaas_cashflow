@@ -2,7 +2,7 @@
 
 import { getToken } from '@/lib/auth';
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8018/api';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/cashflow-api';
 
 async function parseResponse(res: Response) {
   if (!res.ok) throw new Error(`api_error_${res.status}`);
